@@ -510,7 +510,7 @@ namespace NNetliba {
 
         void CancelWait() override {
             MaxWaitTime2 = 0;
-            if (AtomicAdd(IsWaiting, 0) == 1) {
+            if (AtomicGet(IsWaiting) == 1) {
                 s.SendSelfFakePacket();
             }
         }

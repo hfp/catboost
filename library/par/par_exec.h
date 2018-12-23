@@ -680,7 +680,7 @@ namespace NPar {
                 // no new ops to launch
                 // check if the work is complete
                 AtomicAdd(ActiveOpCount, -1); // cancel this block
-                if (AtomicAdd(ActiveOpCount, 0) == 0 && AtomicCas(&IsCanceledFlag, (void*)this, (void*)nullptr))
+                if (AtomicGet(ActiveOpCount) == 0 && AtomicCas(&IsCanceledFlag, (void*)this, (void*)nullptr))
                     TReduceExec::Launch(JobRequest.Get(), CompleteNotify.Get(), &ResultData, &ResultHasData);
             } else {
                 int startIdx = Blocks[blockId].StartIdx;

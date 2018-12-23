@@ -27,7 +27,7 @@ class TLockFreeStack : TNonCopyable {
         TNode* current = AtomicGet(FreePtr);
         if (!current)
             return;
-        if (AtomicAdd(DequeueCount, 0) == 1) {
+        if (AtomicGet(DequeueCount) == 1) {
             // node current is in free list, we are the last thread so try to cleanup
             if (AtomicCas(&FreePtr, (TNode*)nullptr, current))
                 EraseList(current);
@@ -91,7 +91,7 @@ public:
                 // delete current; // ABA problem
                 // even more complex node deletion
                 TryToFreeMemory();
-                if (AtomicAdd(DequeueCount, -1) == 0) {
+                if (AtomicSub(DequeueCount, 1) == 0) {
                     // no other Dequeue()s, can safely reclaim memory
                     delete current;
                 } else {
@@ -106,7 +106,7 @@ public:
             }
         }
         TryToFreeMemory();
-        AtomicAdd(DequeueCount, -1);
+        AtomicSub(DequeueCount, 1);
         return false;
     }
     // add all elements to *res
@@ -123,7 +123,7 @@ public:
                 // EraseList(current); // ABA problem
                 // even more complex node deletion
                 TryToFreeMemory();
-                if (AtomicAdd(DequeueCount, -1) == 0) {
+                if (AtomicSub(DequeueCount, 1) == 0) {
                     // no other Dequeue()s, can safely reclaim memory
                     EraseList(current);
                 } else {
@@ -142,7 +142,7 @@ public:
             }
         }
         TryToFreeMemory();
-        AtomicAdd(DequeueCount, -1);
+        AtomicSub(DequeueCount, 1);
     }
     bool DequeueSingleConsumer(T* res) {
         for (TNode* current = AtomicGet(Head); current; current = AtomicGet(Head)) {

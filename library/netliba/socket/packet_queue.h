@@ -86,7 +86,7 @@ namespace NNetlibaSocket {
         }
 
         bool IsEmpty() const {
-            return AtomicAdd(NumPackets, 0) == 0;
+            return AtomicGet(NumPackets) == 0;
         }
 
         TSystemEvent& GetEvent() const {
