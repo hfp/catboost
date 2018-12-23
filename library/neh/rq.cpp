@@ -280,8 +280,7 @@ namespace {
 
     private:
         static inline TLocalQueue* LocalQueue() noexcept {
-            Y_POD_STATIC_THREAD(TLocalQueue*)
-            lq((TLocalQueue*)0);
+            Y_POD_STATIC_THREAD(TLocalQueue*) lq = nullptr;
 
             if (!lq) {
                 Y_STATIC_THREAD(TLocalQueue)
