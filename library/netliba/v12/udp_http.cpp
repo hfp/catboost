@@ -1062,7 +1062,7 @@ namespace NNetliba_v12 {
     private:
         void FinishOutstandingTransactions() {
             // wait all pending requests, all new requests are canceled
-            while ((!OutRequests.empty() || !InRequests.empty() || !SendRespList.IsEmpty() || !SendReqList.IsEmpty()) && !AtomicAdd(PanicAttack, 0)) {
+            while ((!OutRequests.empty() || !InRequests.empty() || !SendRespList.IsEmpty() || !SendReqList.IsEmpty()) && !AtomicGet(PanicAttack)) {
                 while (TUdpHttpRequest* req = GetRequest()) {
                     TInRequestHash::iterator i = InRequests.find(req->ReqId);
                     //               printf("dropping request(%s) (thread %d)\n", req->Url.c_str(), ThreadId());
@@ -1089,7 +1089,7 @@ namespace NNetliba_v12 {
             }
             NHPTimer::GetTime(&pThis->PingsSendT);
             NHPTimer::GetTime(&pThis->ConnectionsCacheT);
-            while (AtomicAdd(pThis->KeepRunning, 0) && !AtomicAdd(PanicAttack, 0)) {
+            while (AtomicGet(pThis->KeepRunning) && !AtomicGet(PanicAttack)) {
                 if (HeartbeatTimeout > 0) {
                     NHPTimer::STime chk = LastHeartbeat;
                     double passed = NHPTimer::GetTimePassed(&chk);
@@ -1107,7 +1107,7 @@ namespace NNetliba_v12 {
                 pThis->Step();
                 pThis->Wait();
             }
-            if (!AtomicAdd(pThis->AbortTransactions, 0) && !AtomicAdd(PanicAttack, 0))
+            if (!AtomicGet(pThis->AbortTransactions) && !AtomicGet(PanicAttack))
                 pThis->FinishOutstandingTransactions();
             pThis->Host = nullptr;
             return nullptr;
@@ -1333,8 +1333,8 @@ namespace NNetliba_v12 {
         TUdpHttpRequest* res = nullptr;
         rl.Dequeue(&res);
         if (res) {
-            AtomicAdd(QueueSizes->ReqCount, -1);
-            AtomicAdd(QueueSizes->ReqQueueSize, -GetTransferSize(res->DataHolder.Get()));
+            AtomicSub(QueueSizes->ReqCount, 1);
+            AtomicSub(QueueSizes->ReqQueueSize, GetTransferSize(res->DataHolder.Get()));
         }
         UpdateAsyncSignalState();
         LoadRequestData(res);
@@ -1346,8 +1346,8 @@ namespace NNetliba_v12 {
         TUdpHttpResponse* res = nullptr;
         rl.Dequeue(&res);
         if (res) {
-            AtomicAdd(QueueSizes->RespCount, -1);
-            AtomicAdd(QueueSizes->RespQueueSize, -GetTransferSize(res->DataHolder.Get()));
+            AtomicSub(QueueSizes->RespCount, 1);
+            AtomicSub(QueueSizes->RespQueueSize, GetTransferSize(res->DataHolder.Get()));
         }
         UpdateAsyncSignalState();
         LoadResponseData(res);
@@ -1475,7 +1475,7 @@ namespace NNetliba_v12 {
     }
 
     IRequester* CreateHttpUdpRequester(int port) {
-        if (AtomicAdd(PanicAttack, 0))
+        if (AtomicGet(PanicAttack))
             return nullptr;
 
         TIntrusivePtr<ISocket> socket = NNetlibaSocket::CreateBestRecvSocket();
@@ -1487,7 +1487,7 @@ namespace NNetliba_v12 {
     }
 
     IRequester* CreateHttpUdpRequester(const TIntrusivePtr<NNetlibaSocket::ISocket>& socket) {
-        if (AtomicAdd(PanicAttack, 0))
+        if (AtomicGet(PanicAttack))
             return nullptr;
 
         TIntrusivePtr<TUdpHttp> res(new TUdpHttp);

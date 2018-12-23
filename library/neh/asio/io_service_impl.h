@@ -452,7 +452,7 @@ namespace NAsio {
 
         inline void Interrupt() noexcept {
             AtomicSet(NeedCheckOpQueue_, 1);
-            if (AtomicAdd(IsWaiting_, 0) == 1) {
+            if (AtomicGet(IsWaiting_) == 1) {
                 I_.Interrupt();
             }
         }

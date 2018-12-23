@@ -616,31 +616,31 @@ class TLFAllocFreeList {
 public:
     Y_FORCE_INLINE void Free(void* ptr) {
         TNode* newFree = (TNode*)ptr;
-        if (AtomicAdd(AllocCount, 0) == 0)
+        if (AtomicGet(AllocCount) == 0)
             Enqueue(&Head, newFree);
         else
             Enqueue(&Pending, newFree);
     }
     Y_FORCE_INLINE void* Alloc() {
-        TAtomic keepCounter = AtomicAdd(PendingToFreeListCounter, 0);
+        TAtomic keepCounter = AtomicGet(PendingToFreeListCounter);
         TNode* fl = Pending;
         if (AtomicAdd(AllocCount, 1) == 1) {
             // No other allocs in progress.
             // If (keepCounter == PendingToFreeListCounter) then Pending was not freed by other threads.
             // Hence Pending is not used in any concurrent DoAlloc() atm and can be safely moved to FreeList
-            if (fl && keepCounter == AtomicAdd(PendingToFreeListCounter, 0) && DoCas(&Pending, (TNode*)nullptr, fl) == fl) {
+            if (fl && keepCounter == AtomicGet(PendingToFreeListCounter) && DoCas(&Pending, (TNode*)nullptr, fl) == fl) {
                 // pick first element from Pending and return it
                 void* res = fl;
                 fl = fl->Next;
                 // if there are other elements in Pending list, add them to main free list
                 FreeList(fl);
                 AtomicAdd(PendingToFreeListCounter, 1);
-                AtomicAdd(AllocCount, -1);
+                AtomicSub(AllocCount, 1);
                 return res;
             }
         }
         void* res = DoAlloc();
-        AtomicAdd(AllocCount, -1);
+        AtomicSub(AllocCount, 1);
         return res;
     }
     void* GetWholeList() {
@@ -652,7 +652,7 @@ public:
         return res;
     }
     void ReturnWholeList(void* ptr) {
-        while (AtomicAdd(AllocCount, 0) != 0) // theoretically can run into problems with parallel DoAlloc()
+        while (AtomicGet(AllocCount) != 0) // theoretically can run into problems with parallel DoAlloc()
             ;                                 //ThreadYield();
         for (;;) {
             TNode* prevHead = Head;

@@ -465,7 +465,7 @@ namespace NNetliba_v12 {
         BindToSocket(0);
         SetHighestThreadPriority();
         pThis->HasStarted.Signal();
-        while (AtomicAdd(pThis->Run, 0)) {
+        while (AtomicGet(pThis->Run)) {
             pThis->StepLow();
             pThis->WaitLow(0.1f);
         }
@@ -1707,7 +1707,7 @@ namespace NNetliba_v12 {
                     S.Wait(seconds);
                 }
             }
-            AtomicAdd(IsWaiting, -1);
+            AtomicSub(IsWaiting, 1);
         }
     }
 
@@ -1717,7 +1717,7 @@ namespace NNetliba_v12 {
 
     void TUdpHost::CancelWaitLow() {
         MaxWaitTime2 = 0;
-        if (AtomicAdd(IsWaiting, 0) == 1) {
+        if (AtomicGet(IsWaiting) == 1) {
             S.CancelWait();
         }
     }

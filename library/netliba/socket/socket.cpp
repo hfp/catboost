@@ -785,7 +785,7 @@ private:
         TBestUnixRecvSocket impl;
         impl.Reset(*this);
 
-        while (AtomicAdd(NumThreadsToDie, 0) == -1) {
+        while (AtomicGet(NumThreadsToDie) == -1) {
             sockaddr_in6 addr;
             TUdpRecvPacket* packet = impl.Recv(&addr, NETLIBA_ANY_VERSION);
             if (!packet) {
@@ -1013,7 +1013,7 @@ public:
             TUdpRecvPacket* p = nullptr;
             sockaddr_in6 srcAddr;
             sockaddr_in6 dstAddr;
-            while (AtomicAdd(ShouldDie, 0) == 0 && (p = TBase::Recv(&srcAddr, &dstAddr, NETLIBA_ANY_VERSION))) {
+            while (AtomicGet(ShouldDie) == 0 && (p = TBase::Recv(&srcAddr, &dstAddr, NETLIBA_ANY_VERSION))) {
                 Y_ASSERT(p->DataStart == 0);
                 if (p->DataSize < 12) {
                     continue;
@@ -1033,7 +1033,7 @@ public:
                 }
             }
 
-            if (AtomicAdd(ShouldDie, 0)) {
+            if (AtomicGet(ShouldDie)) {
                 DieEvent.Signal();
                 return;
             }
