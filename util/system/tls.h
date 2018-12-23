@@ -128,7 +128,7 @@
 // gcc and msvc support automatic tls for POD types
 #if defined(Y_DISABLE_THRKEY_OPTIMIZATION)
 // nothing to do
-#elif defined(__clang__)
+#elif defined(__clang__) && 0
 #define Y_POD_THREAD(T) thread_local T
 #define Y_POD_STATIC_THREAD(T) static thread_local T
 #elif defined(__GNUC__) && !defined(_cygwin_) && !defined(_arm_) && !defined(__IOS_SIMULATOR__)
