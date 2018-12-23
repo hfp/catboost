@@ -7,6 +7,18 @@
 #include <util/system/yassert.h>
 #include "lfstack.h"
 
+#if !defined(LIST_INVERTOR_TLS_POD) && 0
+# include <util/system/tls.h>
+# define LIST_INVERTOR_TLS_POD
+# define LIST_INVERTOR_GET(A) TlsRef(A)
+#elif !defined(LIST_INVERTOR_TLS) && 0
+# include <util/system/tls.h>
+# define LIST_INVERTOR_TLS
+# define LIST_INVERTOR_GET(A) TlsRef(A)
+#else
+# define LIST_INVERTOR_GET(A) A
+#endif
+
 struct TDefaultLFCounter {
     template <class T>
     void IncCount(const T& data) {
@@ -71,14 +83,14 @@ class TLockFreeQueue: public TNonCopyable {
     TRootNode* volatile FreePtr;
 
     void TryToFreeAsyncMemory() {
-        TAtomic keepCounter = AtomicAdd(FreeingTaskCounter, 0);
         TRootNode* current = AtomicGet(FreePtr);
         if (current == nullptr)
             return;
-        if (AtomicAdd(FreememCounter, 0) == 1) {
+        if (AtomicGet(FreememCounter) == 1) {
+            TAtomic keepCounter = AtomicGet(FreeingTaskCounter);
             // we are the last thread, try to cleanup
             // check if another thread have cleaned up
-            if (keepCounter != AtomicAdd(FreeingTaskCounter, 0)) {
+            if (keepCounter != AtomicGet(FreeingTaskCounter)) {
                 return;
             }
             if (AtomicCas(&FreePtr, (TRootNode*)nullptr, current)) {
@@ -98,7 +110,7 @@ class TLockFreeQueue: public TNonCopyable {
     }
     void AsyncUnref() {
         TryToFreeAsyncMemory();
-        AtomicAdd(FreememCounter, -1);
+        AtomicSub(FreememCounter, 1);
     }
     void AsyncDel(TRootNode* toDelete, TListNode* lst) {
         AtomicSet(toDelete->ToDelete, lst);
@@ -110,7 +122,7 @@ class TLockFreeQueue: public TNonCopyable {
     }
     void AsyncUnref(TRootNode* toDelete, TListNode* lst) {
         TryToFreeAsyncMemory();
-        if (AtomicAdd(FreememCounter, -1) == 0) {
+        if (AtomicSub(FreememCounter, 1) == 0) {
             // no other operations in progress, can safely reclaim memory
             EraseList(lst);
             delete toDelete;
@@ -124,16 +136,26 @@ class TLockFreeQueue: public TNonCopyable {
         TListNode* Copy;
         TListNode* Tail;
         TListNode* PrevFirst;
-
+#if defined(LIST_INVERTOR_TLS_POD) || defined(LIST_INVERTOR_TLS)
+        TListNode* Recycle;
+#endif
+#if !defined(LIST_INVERTOR_TLS_POD)
         TListInvertor()
             : Copy(nullptr)
             , Tail(nullptr)
             , PrevFirst(nullptr)
+# if defined(LIST_INVERTOR_TLS)
+            , Recycle(nullptr)
+# endif
         {
         }
         ~TListInvertor() {
             EraseList(Copy);
+# if defined(LIST_INVERTOR_TLS)
+            EraseList(Recycle);
+# endif
         }
+#endif
         void CopyWasUsed() {
             Copy = nullptr;
             Tail = nullptr;
@@ -153,13 +175,29 @@ class TLockFreeQueue: public TNonCopyable {
                         newTail = Tail; // tried to invert same list
                     break;
                 }
-                TListNode* newElem = new TListNode(ptr->Data, newCopy);
+                TListNode* newElem;
+#if defined(LIST_INVERTOR_TLS_POD) || defined(LIST_INVERTOR_TLS)
+                if (Recycle) {
+                    newElem = Recycle;
+                    Recycle = Recycle->Next;
+                    newElem->Data = ptr->Data;
+                    newElem->Next = newCopy;
+                }
+                else
+#endif
+                {
+                    newElem = new TListNode(ptr->Data, newCopy);
+                }
                 newCopy = newElem;
                 ptr = AtomicGet(ptr->Next);
                 if (!newTail)
                     newTail = newElem;
             }
+#if defined(LIST_INVERTOR_TLS_POD) || defined(LIST_INVERTOR_TLS)
+            Recycle = Copy; // copy was useless
+#else
             EraseList(Copy); // copy was useless
+#endif
             Copy = newCopy;
             PrevFirst = newFirst;
             Tail = newTail;
@@ -239,7 +277,15 @@ public:
     }
     bool Dequeue(T* data) {
         TRootNode* newRoot = nullptr;
+#if defined(LIST_INVERTOR_TLS_POD)
+        Y_POD_STATIC_THREAD(TListInvertor) listInvertor;
+        LIST_INVERTOR_GET(listInvertor).CopyWasUsed();
+#elif defined(LIST_INVERTOR_TLS)
+        Y_STATIC_THREAD(TListInvertor) listInvertor;
+        LIST_INVERTOR_GET(listInvertor).CopyWasUsed();
+#else
         TListInvertor listInvertor;
+#endif
         AsyncRef();
         for (;;) {
             TRootNode* curRoot = AtomicGet(JobQueue);
@@ -271,13 +317,13 @@ public:
             if (!newRoot)
                 newRoot = new TRootNode;
             AtomicSet(newRoot->PushQueue, nullptr);
-            listInvertor.DoCopy(AtomicGet(curRoot->PushQueue));
-            newRoot->PopQueue = listInvertor.Copy;
+            LIST_INVERTOR_GET(listInvertor).DoCopy(AtomicGet(curRoot->PushQueue));
+            newRoot->PopQueue = LIST_INVERTOR_GET(listInvertor).Copy;
             newRoot->CopyCounter(curRoot);
             Y_ASSERT(AtomicGet(curRoot->PopQueue) == nullptr);
             if (AtomicCas(&JobQueue, newRoot, curRoot)) {
                 newRoot = nullptr;
-                listInvertor.CopyWasUsed();
+                LIST_INVERTOR_GET(listInvertor).CopyWasUsed();
                 AsyncDel(curRoot, AtomicGet(curRoot->PushQueue));
             } else {
                 AtomicSet(newRoot->PopQueue, nullptr);
