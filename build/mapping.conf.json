@@ -238,7 +238,16 @@
         "777479329": "https://storage.mds.yandex.net/get-devtools-opensource/250854/777479329", 
         "780083626": "https://storage.mds.yandex.net/get-devtools-opensource/479623/780083626", 
         "780083701": "https://storage.mds.yandex.net/get-devtools-opensource/233854/780083701", 
-        "780083821": "https://storage.mds.yandex.net/get-devtools-opensource/233854/780083821"
+        "780083821": "https://storage.mds.yandex.net/get-devtools-opensource/233854/780083821", 
+        "780169329": "https://storage.mds.yandex.net/get-devtools-opensource/479623/780169329", 
+        "780169437": "https://storage.mds.yandex.net/get-devtools-opensource/250854/780169437", 
+        "780169625": "https://storage.mds.yandex.net/get-devtools-opensource/479623/780169625", 
+        "782532954": "https://storage.mds.yandex.net/get-devtools-opensource/479623/782532954", 
+        "782533023": "https://storage.mds.yandex.net/get-devtools-opensource/479623/782533023", 
+        "782533123": "https://storage.mds.yandex.net/get-devtools-opensource/471749/782533123", 
+        "783850329": "https://storage.mds.yandex.net/get-devtools-opensource/250854/783850329", 
+        "783850367": "https://storage.mds.yandex.net/get-devtools-opensource/250854/783850367", 
+        "783850474": "https://storage.mds.yandex.net/get-devtools-opensource/233854/783850474"
     }, 
     "tasks": {
         "220049371": {
@@ -617,6 +626,21 @@
             "darwin": "780083701", 
             "linux": "780083821", 
             "win32": "780083626"
+        }, 
+        "350996926": {
+            "darwin": "780169437", 
+            "linux": "780169625", 
+            "win32": "780169329"
+        }, 
+        "352169619": {
+            "darwin": "782533023", 
+            "linux": "782533123", 
+            "win32": "782532954"
+        }, 
+        "352720079": {
+            "darwin": "783850367", 
+            "linux": "783850474", 
+            "win32": "783850329"
         }, 
         "74052635": {
             "cygwin": "173608101", 
