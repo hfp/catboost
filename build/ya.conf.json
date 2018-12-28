@@ -12,6 +12,7 @@
         "c++filt": { "description": "Run c++filt" },
         "nm": { "description": "Run nm" },
         "svn": { "description": "Subversion command-line client" },
+        "zipatcher": { "description": "Apply zipatch from file or Arcanum pull request" },
         "ymake": { "description": "Run ymake", "visible": false },
         "ymake_dev": { "description": "Run ymake dev version", "visible": false },
         "test_tool": { "description": "Test tools for tests", "visible": false },
@@ -69,7 +70,9 @@
         "crypta": { "description": "Run Crypta client" },
         "go": { "description": "Run go tool" },
         "godoc": { "description": "Run godoc tool" },
-        "gofmt": { "description": "Run gofmt tool"}
+        "gofmt": { "description": "Run gofmt tool" },
+        "yo": { "description": "Tool for managing vendor/ directory" },
+        "golangci-lint": { "description": "Linters Runner for Go" }
     },
     "toolchain": {
         "msvc2017-i686": {
@@ -234,6 +237,24 @@
         "arc": {
             "tools": {
                 "arc": { "bottle": "arc", "executable": "arc" }
+            },
+            "platforms": [
+                {"host": {"os": "LINUX"}, "default": true},
+                {"host": {"os": "DARWIN"}, "default": true}
+            ]
+        },
+        "yo": {
+            "tools": {
+                "yo": { "bottle": "yo", "executable": "yo" }
+            },
+            "platforms": [
+                {"host": {"os": "LINUX"}, "default": true},
+                {"host": {"os": "DARWIN"}, "default": true}
+            ]
+        },
+        "golangci-lint": {
+            "tools": {
+                "golangci-lint": { "bottle": "golangci-lint", "executable": "golangci-lint" }
             },
             "platforms": [
                 {"host": {"os": "LINUX"}, "default": true},
@@ -742,6 +763,14 @@
                   {"host": {"os": "DARWIN", "default": true}}
             ]
         },
+        "zipatcher": {
+            "tools": {
+                "zipatcher": { "bottle": "zipatcher", "executable": "zipatcher" }
+            },
+            "platforms": [
+                  {"host": {"os": "LINUX"}, "default": true}
+            ]
+        },
         "cmake": {
             "tools": {
                 "cmake": { "bottle": "cmake", "executable": "cmake" }
@@ -1171,7 +1200,7 @@
         },
         "ymake": {
             "formula": {
-                "sandbox_id": [352720079],
+                "sandbox_id": [352849120],
                 "match": "ymake"
             },
             "executable": {
@@ -1189,7 +1218,7 @@
         },
         "test_tool": {
             "formula": {
-                "sandbox_id": [350962565],
+                "sandbox_id": [353026643],
                 "match": "test_tool"
             },
             "executable": {
@@ -1216,11 +1245,29 @@
         },
         "arc": {
             "formula": {
-                "sandbox_id": [351914840],
+                "sandbox_id": [353992795],
                 "match": "arc"
             },
             "executable": {
                 "arc": ["arc"]
+            }
+        },
+        "yo": {
+            "formula": {
+                "sandbox_id": [354209832, 354209844],
+                "match": "yo"
+            },
+            "executable": {
+                "yo": ["yo/yo"]
+            }
+        },
+        "golangci-lint": {
+            "formula": {
+                "sandbox_id": [352933824, 352932977],
+                "match": "golangci-lint"
+            },
+            "executable": {
+                "golangci-lint": ["golangci-lint"]
             }
         },
         "hg": {
@@ -1599,7 +1646,7 @@
         },
         "yp-util": {
             "formula": {
-                "sandbox_id":  [334276246],
+                "sandbox_id":  [353295496],
                 "match": "yp_cli"
             },
             "executable": {
@@ -1694,6 +1741,15 @@
                 "svnadmin": ["svnadmin"],
                 "svnlook": ["svnlook"],
                 "svnversion": ["svnversion"]
+            }
+        },
+        "zipatcher": {
+            "formula": {
+                "sandbox_id": 353975384,
+                "match": "zipatcher"
+            },
+            "executable": {
+                "zipatcher": ["zipatcher"]
             }
         },
         "cmake": {
