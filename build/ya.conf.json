@@ -1200,7 +1200,7 @@
         },
         "ymake": {
             "formula": {
-                "sandbox_id": [353848109],
+                "sandbox_id": [354619487],
                 "match": "ymake"
             },
             "executable": {
@@ -1245,7 +1245,7 @@
         },
         "arc": {
             "formula": {
-                "sandbox_id": [353992795],
+                "sandbox_id": [355230313],
                 "match": "arc"
             },
             "executable": {
@@ -1254,7 +1254,7 @@
         },
         "yo": {
             "formula": {
-                "sandbox_id": [354209832, 354209844],
+                "sandbox_id": [355033617, 355033622],
                 "match": "yo"
             },
             "executable": {
@@ -1498,7 +1498,7 @@
         },
         "yt": {
             "formula": {
-                "sandbox_id": 204320868,
+                "sandbox_id": 354938258,
                 "match": "YT"
             },
             "executable": {
@@ -1507,7 +1507,7 @@
         },
         "yndexer": {
             "formula": {
-                "sandbox_id": 268956306,
+                "sandbox_id": 354422815,
                 "match": "YNDEXER"
             },
             "executable": {
@@ -1745,7 +1745,7 @@
         },
         "zipatcher": {
             "formula": {
-                "sandbox_id": 353975384,
+                "sandbox_id": 355188223,
                 "match": "zipatcher"
             },
             "executable": {

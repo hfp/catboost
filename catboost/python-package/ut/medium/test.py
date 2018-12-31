@@ -21,7 +21,7 @@ from catboost import (
     train,)
 from catboost.eval.catboost_evaluation import CatboostEvaluation
 from catboost.utils import eval_metric, create_cd, get_roc_curve, select_threshold
-from pandas import read_table, DataFrame, Series
+from pandas import read_table, DataFrame, Series, Categorical
 from six import PY3
 from six.moves import xrange
 from catboost_pytest_lib import (
@@ -79,6 +79,7 @@ OUTPUT_COREML_MODEL_PATH = 'model.mlmodel'
 OUTPUT_CPP_MODEL_PATH = 'model.cpp'
 OUTPUT_PYTHON_MODEL_PATH = 'model.py'
 OUTPUT_JSON_MODEL_PATH = 'model.json'
+OUTPUT_ONNX_MODEL_PATH = 'model.onnx'
 PREDS_PATH = 'predictions.npy'
 PREDS_TXT_PATH = 'predictions.txt'
 FIMP_NPY_PATH = 'feature_importance.npy'
@@ -268,6 +269,30 @@ def test_load_dumps():
     pool2 = Pool('test_data_dumps')
     assert _check_data(pool1.get_features(), pool2.get_features())
     assert pool1.get_label() == [int(label) for label in pool2.get_label()]
+
+
+def test_dataframe_with_pandas_categorical_columns():
+    df = DataFrame()
+    df['num_feat_0'] = [0, 1, 0, 2, 3, 1, 2]
+    df['num_feat_1'] = [0.12, 0.8, 0.33, 0.11, 0.0, 1.0, 0.0]
+    df['cat_feat_2'] = Series(['A', 'B', 'A', 'C', 'A', 'A', 'A'], dtype='category')
+    df['cat_feat_3'] = Series(['x', 'x', 'y', 'y', 'y', 'x', 'x'])
+    df['cat_feat_4'] = Categorical(
+        ['large', 'small', 'medium', 'large', 'small', 'small', 'medium'],
+        categories=['small', 'medium', 'large'],
+        ordered=True
+    )
+    df['cat_feat_5'] = [0, 1, 0, 2, 3, 1, 2]
+
+    labels = [0, 1, 1, 0, 1, 0, 1]
+
+    model = CatBoostClassifier(iterations=2)
+    model.fit(X=df, y=labels, cat_features=[2, 3, 4, 5])
+    pred = model.predict(df)
+
+    preds_path = test_output_path(PREDS_TXT_PATH)
+    np.savetxt(preds_path, np.array(pred), fmt='%.8f')
+    return local_canonical_file(preds_path)
 
 
 # feature_matrix is (doc_count x feature_count)
@@ -776,6 +801,53 @@ def test_export_to_python_with_cat_features_from_pandas(task_type):
     output_python_model_path = test_output_path(OUTPUT_PYTHON_MODEL_PATH)
     model.save_model(output_python_model_path, format="python", pool=X)
     return local_canonical_file(output_python_model_path)
+
+
+@pytest.mark.parametrize('problem_type', ['binclass', 'multiclass', 'regression'])
+def test_onnx_export(problem_type):
+    if problem_type == 'binclass':
+        loss_function = 'Logloss'
+        train_path = TRAIN_FILE
+        cd_path = CD_FILE
+    elif problem_type == 'multiclass':
+        loss_function = 'MultiClass'
+        train_path = CLOUDNESS_TRAIN_FILE
+        cd_path = CLOUDNESS_CD_FILE
+    elif problem_type == 'regression':
+        loss_function = 'RMSE'
+        train_path = TRAIN_FILE
+        cd_path = CD_FILE
+    else:
+        raise Exception('Unsupported problem_type: %s' % problem_type)
+
+    train_pool = Pool(train_path, column_description=cd_path)
+
+    model = CatBoost(
+        {
+            'task_type': 'CPU',  # TODO(akhropov): GPU results are unstable, difficult to compare models
+            'loss_function': loss_function,
+            'iterations': 5,
+            'depth': 4,
+
+            # onnx format export does not yet support categorical features so ignore them
+            'ignored_features': train_pool.get_cat_feature_indices()
+        }
+    )
+
+    model.fit(train_pool)
+
+    output_onnx_model_path = test_output_path(OUTPUT_ONNX_MODEL_PATH)
+    model.save_model(
+        output_onnx_model_path,
+        format="onnx",
+        export_parameters={
+            'onnx_domain': 'ai.catboost',
+            'onnx_model_version': 1,
+            'onnx_doc_string': 'test model for problem_type %s' % problem_type,
+            'onnx_graph_name': 'CatBoostModel_for_%s' % problem_type
+        }
+    )
+    return compare_canonical_models(output_onnx_model_path)
 
 
 def test_predict_class(task_type):
@@ -1514,7 +1586,7 @@ def test_cv(task_type):
             "eval_metric": "AUC",
             "task_type": task_type,
         },
-        iterations_batch_size=6
+        dev_max_iterations_batch_size=6
     )
     assert "train-Logloss-mean" in results
 
@@ -1530,7 +1602,7 @@ def test_cv_query(task_type):
     results = cv(
         pool,
         {"iterations": 20, "learning_rate": 0.03, "loss_function": "QueryRMSE", "task_type": task_type},
-        iterations_batch_size=6
+        dev_max_iterations_batch_size=6
     )
     assert "train-QueryRMSE-mean" in results
 
@@ -1552,7 +1624,7 @@ def test_cv_pairs(task_type):
             "loss_function": "PairLogit",
             "task_type": task_type
         },
-        iterations_batch_size=6
+        dev_max_iterations_batch_size=6
     )
     assert "train-PairLogit-mean" in results
 
@@ -1574,7 +1646,7 @@ def test_cv_pairs_generated(task_type):
             "loss_function": "PairLogit",
             "task_type": task_type
         },
-        iterations_batch_size=6
+        dev_max_iterations_batch_size=6
     )
     assert "train-PairLogit-mean" in results
 
@@ -1712,7 +1784,7 @@ def test_cv_logging(task_type):
             "loss_function": "Logloss",
             "task_type": task_type
         },
-        iterations_batch_size=6
+        dev_max_iterations_batch_size=6
     )
     return local_canonical_file(remove_time_from_json(JSON_LOG_PATH))
 
@@ -1724,7 +1796,7 @@ def test_cv_with_not_binarized_target(task_type):
     cv(
         pool,
         {"iterations": 10, "learning_rate": 0.03, "loss_function": "Logloss", "task_type": task_type},
-        iterations_batch_size=6
+        dev_max_iterations_batch_size=6
     )
     return local_canonical_file(remove_time_from_json(JSON_LOG_PATH))
 
@@ -1864,7 +1936,7 @@ def test_verbose_int(verbose, task_type):
             pool,
             {"iterations": 10, "learning_rate": 0.03, "loss_function": "Logloss", "task_type": task_type},
             verbose=verbose,
-            iterations_batch_size=6
+            dev_max_iterations_batch_size=6
         )
     assert(_count_lines(tmpfile) == expected_line_count[verbose])
 
@@ -2516,7 +2588,7 @@ def test_learning_rate_auto_set_in_cv(task_type):
     results = cv(
         pool,
         {"iterations": 14, "loss_function": "Logloss", "task_type": task_type},
-        iterations_batch_size=6
+        dev_max_iterations_batch_size=6
     )
     assert "train-Logloss-mean" in results
 
@@ -2767,7 +2839,7 @@ def test_roc(task_type):
             'thread_count': 4,
             'task_type': task_type
         },
-        iterations_batch_size=6
+        dev_max_iterations_batch_size=6
     )
 
     model = CatBoostClassifier(loss_function='Logloss', iterations=20)
@@ -2933,7 +3005,7 @@ def test_use_loss_if_no_eval_metric_cv(task_type):
         'seed': 0,
         'nfold': 3,
         'early_stopping_rounds': 5,
-        'iterations_batch_size': 20
+        'dev_max_iterations_batch_size': 20
     }
 
     results_1 = cv(train_pool, **cv_params)
@@ -2970,7 +3042,7 @@ def test_no_fail_if_metric_is_repeated_cv(task_type, metrics):
         'params': params,
         'nfold': 2,
         'as_pandas': True,
-        'iterations_batch_size': 6
+        'dev_max_iterations_batch_size': 6
     }
 
     cv(train_pool, **cv_params)

@@ -75,6 +75,10 @@
         "checksum": "63bed0c6ce8f4ae88010f51fd284485e",
         "uri": "file://test.test_cv_with_not_binarized_target_CPU_/catboost_training.json"
     },
+    "test.test_dataframe_with_pandas_categorical_columns": {
+        "checksum": "5f94d483079c4b3a170c5016af378a1e",
+        "uri": "file://test.test_dataframe_with_pandas_categorical_columns/predictions.txt"
+    },
     "test.test_early_stopping_rounds[CPU]": [
         {
             "checksum": "c4c53ab9054b0fd6c45c07ee19d65efd",
@@ -204,6 +208,18 @@
     "test.test_ones_weight[CPU]": {
         "checksum": "265e17e98d6883a674a724c911337bc2",
         "uri": "file://test.test_ones_weight_CPU_/model.bin"
+    },
+    "test.test_onnx_export[binclass]": {
+        "checksum": "3fe04519995693b32faf82e75cd7d46c",
+        "uri": "file://test.test_onnx_export_binclass_/model.onnx"
+    },
+    "test.test_onnx_export[multiclass]": {
+        "checksum": "f6edd53c51049cbc79fe0a39b925d5b5",
+        "uri": "file://test.test_onnx_export_multiclass_/model.onnx"
+    },
+    "test.test_onnx_export[regression]": {
+        "checksum": "0d68d5921c78b95c9923e5e48aaf324e",
+        "uri": "file://test.test_onnx_export_regression_/model.onnx"
     },
     "test.test_pairs_generation[CPU]": {
         "checksum": "1643bc125ee1d535e90487230553fb88",
