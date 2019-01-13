@@ -1245,7 +1245,7 @@
         },
         "arc": {
             "formula": {
-                "sandbox_id": [355230313],
+                "sandbox_id": [360416694],
                 "match": "arc"
             },
             "executable": {
@@ -1254,11 +1254,11 @@
         },
         "yo": {
             "formula": {
-                "sandbox_id": [355033617, 355033622],
+                "sandbox_id": [360631808, 360631809],
                 "match": "yo"
             },
             "executable": {
-                "yo": ["yo/yo"]
+                "yo": ["yo"]
             }
         },
         "golangci-lint": {
@@ -1745,7 +1745,7 @@
         },
         "zipatcher": {
             "formula": {
-                "sandbox_id": 355188223,
+                "sandbox_id": 358941237,
                 "match": "zipatcher"
             },
             "executable": {
