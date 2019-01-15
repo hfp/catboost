@@ -1218,7 +1218,7 @@
         },
         "test_tool": {
             "formula": {
-                "sandbox_id": [353026643],
+                "sandbox_id": [361194349],
                 "match": "test_tool"
             },
             "executable": {
@@ -1245,7 +1245,7 @@
         },
         "arc": {
             "formula": {
-                "sandbox_id": [360416694],
+                "sandbox_id": [361484757],
                 "match": "arc"
             },
             "executable": {
@@ -1254,7 +1254,7 @@
         },
         "yo": {
             "formula": {
-                "sandbox_id": [360631808, 360631809],
+                "sandbox_id": [361379374, 360631809],
                 "match": "yo"
             },
             "executable": {
