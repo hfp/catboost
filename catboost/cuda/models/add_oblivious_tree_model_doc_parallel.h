@@ -1,17 +1,18 @@
 #pragma once
 
+#include "add_doc_parallel.h"
 #include <catboost/cuda/models/oblivious_model.h>
 #include <catboost/cuda/gpu_data/doc_parallel_dataset.h>
 
 namespace NCatboostCuda {
-
-    class TAddDocParallelObliviousTree {
+    template <>
+    class TAddModelDocParallel<TObliviousTreeModel> {
     public:
         using TVec = TStripeBuffer<float>;
         using TDataSet = TDocParallelDataSet;
         using TCompressedIndex = typename TDataSet::TCompressedIndex;
 
-        TAddDocParallelObliviousTree(bool useStreams = false) {
+        TAddModelDocParallel(bool useStreams = false) {
             if (useStreams) {
                 const ui32 streamCount = 2;
                 for (ui32 i = 0; i < streamCount; ++i) {
@@ -20,9 +21,9 @@ namespace NCatboostCuda {
             }
         }
 
-        TAddDocParallelObliviousTree& AddTask(const TObliviousTreeModel& model,
-                                              const TDataSet& dataSet,
-                                              TStripeBuffer<float>& cursor);
+        TAddModelDocParallel& AddTask(const TObliviousTreeModel& model,
+                                      const TDataSet& dataSet,
+                                      TStripeBuffer<float>& cursor);
 
         void Proceed();
 
@@ -45,8 +46,6 @@ namespace NCatboostCuda {
         TVector<ui8> FeatureBins;
         NCudaLib::TParallelStripeVectorBuilder<TCFeature> FeaturesBuilder;
     };
-
-
 
     void ComputeBinsForModel(const TObliviousTreeStructure& structure,
                              const TDocParallelDataSet& dataSet,

@@ -16,9 +16,7 @@
 #include <algorithm>
 #include <tuple>
 
-
 namespace NCatboostCuda {
-
     enum class EBinSplitType {
         TakeBin,
         TakeGreater
@@ -28,6 +26,10 @@ namespace NCatboostCuda {
         Zero,
         One,
     };
+
+    inline ui32 GetSplitValue(ESplitValue value) {
+        return value == ESplitValue::Zero ? 0 : 1;
+    }
 
     struct TBinarySplit {
         ui32 FeatureId = 0; //from feature manager
@@ -49,6 +51,10 @@ namespace NCatboostCuda {
             return std::tie(FeatureId, BinIdx, SplitType) < std::tie(other.FeatureId, other.BinIdx, other.SplitType);
         }
 
+        bool operator<=(const TBinarySplit& other) const {
+            return std::tie(FeatureId, BinIdx, SplitType) <= std::tie(other.FeatureId, other.BinIdx, other.SplitType);
+        }
+
         bool operator==(const TBinarySplit& other) const {
             return std::tie(FeatureId, BinIdx, SplitType) == std::tie(other.FeatureId, other.BinIdx, other.SplitType);
         }
@@ -63,8 +69,6 @@ namespace NCatboostCuda {
 
         Y_SAVELOAD_DEFINE(FeatureId, BinIdx, SplitType);
     };
-
-
 
     template <class TVectorType>
     inline void Unique(TVectorType& vector) {

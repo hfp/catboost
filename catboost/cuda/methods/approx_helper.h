@@ -4,7 +4,6 @@
 #include <vector>
 
 namespace NCatboostCuda {
-
     template <class TMapping, class TFloat>
     inline void ReadApproxInCpuFormat(const TCudaBuffer<TFloat, TMapping>& cursor, bool oneMoreApproxAsZeroes, TVector<TVector<double>>* pointOnCpuPtr) {
         auto& pointOnCpu = *pointOnCpuPtr;
@@ -21,6 +20,7 @@ namespace NCatboostCuda {
                 pointOnCpu[column][i] = point[column * docCount + i];
             }
         }
+
         if (oneMoreApproxAsZeroes) {
             //make it zeroes for CPU compatibility
             pointOnCpu.resize(columnCount + 1);

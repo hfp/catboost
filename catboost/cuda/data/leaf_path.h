@@ -13,10 +13,7 @@
 
 #include <tuple>
 
-
 namespace NCatboostCuda {
-
-
     struct TLeafPath {
         TVector<TBinarySplit> Splits;
         TVector<ESplitValue> Directions;
@@ -42,8 +39,24 @@ namespace NCatboostCuda {
             return MultiHash(VecCityHash(Splits), VecCityHash(Directions));
         }
 
-        Y_SAVELOAD_DEFINE(Splits, Directions);
+        bool IsSorted() const {
+            for (ui32 i = 1; i < Splits.size(); ++i) {
+                if (Splits[i] <= Splits[i - 1]) {
+                    return false;
+                }
+            }
+            return true;
+        }
 
+        bool HasDuplicates() const {
+            for (ui32 i = 1; i < Splits.size(); ++i) {
+                if (Splits[i] == Splits[i - 1]) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        Y_SAVELOAD_DEFINE(Splits, Directions);
     };
 
     inline TLeafPath PreviousSplit(const TLeafPath& path) {
@@ -54,8 +67,49 @@ namespace NCatboostCuda {
         prevPath.Directions.resize(size - 1);
         return prevPath;
     }
-}
 
+    template <class TSortBy>
+    inline TLeafPath SortPath(const TLeafPath& path, TSortBy&& cmpFunc) {
+        TVector<ui32> indices(path.Splits.size());
+        Iota(indices.begin(), indices.end(), 0);
+        Sort(indices.begin(), indices.end(), [&](const ui32 left, const ui32 right) -> bool {
+            return cmpFunc(path.Splits[left], path.Splits[right]);
+        });
+        auto newPath = path;
+        for (ui64 i = 0; i < indices.size(); ++i) {
+            const ui32 loadIdx = indices[i];
+            newPath.Splits[i] = path.Splits[loadIdx];
+            newPath.Directions[i] = path.Directions[loadIdx];
+        }
+        return newPath;
+    }
+
+    template <class TSortBy>
+    inline TLeafPath SortUniquePath(const TLeafPath& path, TSortBy&& cmpFunc) {
+        TVector<ui32> indices(path.Splits.size());
+        Iota(indices.begin(), indices.end(), 0);
+        Sort(indices, [&](const ui32 left, const ui32 right) -> bool {
+            return cmpFunc(path.Splits[left], path.Splits[right]);
+        });
+
+        auto last = std::unique(indices.begin(), indices.end(), [&](const ui32 left, const ui32 right) -> bool {
+            return path.Splits[left] == path.Splits[right] && path.Directions[left] == path.Directions[right];
+        });
+        indices.resize(last - indices.begin());
+
+        TLeafPath newPath;
+        newPath.Splits.resize(indices.size());
+        newPath.Directions.resize(indices.size());
+
+        for (ui64 i = 0; i < indices.size(); ++i) {
+            const ui32 loadIdx = indices[i];
+            newPath.Splits[i] = path.Splits[loadIdx];
+            newPath.Directions[i] = path.Directions[loadIdx];
+        }
+        CB_ENSURE(!newPath.HasDuplicates());
+        return newPath;
+    }
+}
 
 template <>
 struct THash<NCatboostCuda::TLeafPath> {

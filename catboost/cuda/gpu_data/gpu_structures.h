@@ -7,10 +7,9 @@
 #ifndef __NVCC__
 
 #include <catboost/cuda/cuda_lib/cuda_manager.h>
-
 #include <util/ysaveload.h>
-
 #include <float.h>
+#include <util/digest/multi.h>
 
 #endif
 //struct to make bin-feature from ui32 feature
@@ -59,7 +58,6 @@ struct TBinarizedFeature {
     bool OneHotFeature = false;
 };
 
-
 struct TBestSplitProperties {
     ui32 FeatureId = static_cast<ui32>(-1);
     ui32 BinId = 0;
@@ -89,7 +87,6 @@ struct TBestSplitProperties {
             return false;
         }
     }
-
 
     bool Defined() const {
         return FeatureId != static_cast<ui32>(-1);
@@ -136,9 +133,6 @@ struct TPartitionStatistics {
     }
 };
 
-
-
-
 /*
  *  so we could write results in the following layout:
  *  leaf0
@@ -157,14 +151,42 @@ struct TFeatureInBlock {
     int Folds = 0;
     int FoldOffsetInGroup = 0;
     int GroupOffset = 0; //offsets with global indexing
-    int GroupSize = 0; // size of group = number of binFeatures on devices with this feature after reduceScatter
+    int GroupSize = 0;   // size of group = number of binFeatures on devices with this feature after reduceScatter
 };
 
+struct TRegionDirection {
+    ui16 Bin = 0;
+    ui16 Value = 0;
+};
 
+struct TTreeNode {
+    ui16 FeatureId = 0;
+    ui16 Bin = 0;
+
+    ui16 LeftSubtree = 0;
+    ui16 RightSubtree = 0;
+
+#ifndef __NVCC__
+    ui64 GetHash() const {
+        return MultiHash(FeatureId, Bin, LeftSubtree, RightSubtree);
+    }
+
+    bool operator==(const TTreeNode& rhs) const {
+        return std::tie(FeatureId, Bin, LeftSubtree, RightSubtree) == std::tie(rhs.FeatureId, rhs.Bin, rhs.LeftSubtree, rhs.RightSubtree);
+    }
+    bool operator!=(const TTreeNode& rhs) const {
+        return !(rhs == *this);
+    }
+
+#endif
+};
 
 #ifndef __NVCC__
 Y_DECLARE_PODTYPE(TCFeature);
 Y_DECLARE_PODTYPE(TCBinFeature);
+Y_DECLARE_PODTYPE(TRegionDirection);
+Y_DECLARE_PODTYPE(TFeatureInBlock);
+Y_DECLARE_PODTYPE(TTreeNode);
 
 namespace NCudaLib {
     namespace NHelpers {

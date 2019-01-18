@@ -21,7 +21,6 @@
 
 #include <util/stream/format.h>
 
-
 namespace NCatboostCuda {
     template <template <class TMapping> class TTargetTemplate,
               class TWeakLearner_>
@@ -31,7 +30,6 @@ namespace NCatboostCuda {
         using TWeakLearner = TWeakLearner_;
         using TResultModel = TAdditiveModel<typename TWeakLearner::TResultModel>;
         using TWeakModel = typename TWeakLearner::TResultModel;
-        using TWeakModelStructure = typename TWeakLearner::TWeakModelStructure;
         using TVec = typename TObjective::TVec;
         using TConstVec = typename TObjective::TConstVec;
         using TDataSet = TDocParallelDataSet;
@@ -383,7 +381,8 @@ namespace NCatboostCuda {
             , Config(config)
             , TargetOptions(targetOptions)
             , LocalExecutor(localExecutor)
-        {}
+        {
+        }
 
         virtual ~TBoosting() = default;
 

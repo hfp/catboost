@@ -7,22 +7,21 @@
 #include <catboost/cuda/gpu_data/doc_parallel_dataset.h>
 #include <catboost/cuda/data/leaf_path.h>
 
-
 namespace NCatboostCuda {
-
     class TGreedySearchHelper {
     public:
         TGreedySearchHelper(const TDocParallelDataSet& dataSet,
                             const TBinarizedFeaturesManager& featuresManager,
                             const TTreeStructureSearcherOptions& options,
-                            TGpuAwareRandom& random
-                            )
+                            ui32 statCount,
+                            TGpuAwareRandom& random)
             : FeaturesManager(featuresManager)
             , Options(options)
             , SplitPropsHelper(dataSet,
                                featuresManager,
-                               GetComputeByBlocksHelper(dataSet, options))
-           , Random(random) {
+                               GetComputeByBlocksHelper(dataSet, options, statCount))
+            , Random(random)
+        {
         }
 
         TPointsSubsets CreateInitialSubsets(const IWeakObjective& objective);
@@ -43,13 +42,12 @@ namespace NCatboostCuda {
 
         bool ShouldTerminate(const TPointsSubsets& subsets);
 
-        void MarkTerminal(TPointsSubsets* subsets);
+        void MarkTerminal(const TVector<ui32>& ids, TPointsSubsets* subsets);
 
         bool AreAllTerminal(const TPointsSubsets& subsets,
                             const TVector<ui32>& leaves);
 
         void SelectLeavesToSplit(const TPointsSubsets& subsets,
-                                 TVector<ui32>* leavesToSkip,
                                  TVector<ui32>* leavesToSplit);
 
         void SelectLeavesToVisit(const TPointsSubsets& subsets,

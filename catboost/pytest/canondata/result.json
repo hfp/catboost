@@ -1233,6 +1233,12 @@
             "uri": "file://test.test_dist_train_with_weights_calc_block=60_/test_1.eval"
         }
     ],
+    "test.test_dist_train_yetirank": [
+        {
+            "checksum": "5c0785b117884e9810ffbfde0a06fdcb",
+            "uri": "file://test.test_dist_train_yetirank/test_1.eval"
+        }
+    ],
     "test.test_doc_id[Ordered-Logloss]": [
         {
             "checksum": "ba7dd31ffa876f474aec89555ea5f588",
@@ -1967,6 +1973,26 @@
         {
             "checksum": "c7e08b4b72944a28e17d91a3ebdad045",
             "uri": "file://test.test_group_weights_file_quantized/first.eval"
+        }
+    ],
+    "test.test_groupwise_with_cat_features[loss_function=QueryRMSE,eval_metric=NDCG,boosting_type=Ordered]": [
+        {
+            "checksum": "fcf0681211e55639b9fa1c6955e5f804",
+            "uri": "file://test.test_groupwise_with_cat_features_loss_function=QueryRMSE_eval_metric=NDCG_boosting_type=Ordered_/learn_error.tsv"
+        },
+        {
+            "checksum": "81aad3ece592b3308f840fa928ad4cef",
+            "uri": "file://test.test_groupwise_with_cat_features_loss_function=QueryRMSE_eval_metric=NDCG_boosting_type=Ordered_/test_error.tsv"
+        }
+    ],
+    "test.test_groupwise_with_cat_features[loss_function=QueryRMSE,eval_metric=NDCG,boosting_type=Plain]": [
+        {
+            "checksum": "3f4ddafa3a64d07cbb0c5a4817e64857",
+            "uri": "file://test.test_groupwise_with_cat_features_loss_function=QueryRMSE_eval_metric=NDCG_boosting_type=Plain_/learn_error.tsv"
+        },
+        {
+            "checksum": "db66d92131d31e26a3ae2c7db45a8951",
+            "uri": "file://test.test_groupwise_with_cat_features_loss_function=QueryRMSE_eval_metric=NDCG_boosting_type=Plain_/test_error.tsv"
         }
     ],
     "test.test_ignored_features[Ordered]": [

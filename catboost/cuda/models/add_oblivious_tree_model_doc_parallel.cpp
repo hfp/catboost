@@ -3,7 +3,6 @@
 #include <catboost/cuda/cuda_lib/read_and_write_helpers.h>
 
 namespace NCatboostCuda {
-
     namespace {
         class TComputeLeavesDocParallel {
         public:
@@ -39,7 +38,7 @@ namespace NCatboostCuda {
                 for (ui32 i = 0; i < modelSplits.size(); ++i) {
                     TBinarySplit split = modelSplits[i];
                     FeaturesBuilder.Add(dataSet.GetTCFeature(split.FeatureId));
-                    FeatureBins.push_back(split.BinIdx);
+                    Nodes.push_back(split.BinIdx);
 
                     if (split.SplitType == EBinSplitType::TakeBin) {
                         CB_ENSURE(dataSet.IsOneHot(split.FeatureId));
@@ -56,8 +55,8 @@ namespace NCatboostCuda {
                 TMirrorBuffer<ui8> bins;
                 TStripeBuffer<TCFeature> features;
                 FeaturesBuilder.Build(features);
-                bins.Reset(NCudaLib::TMirrorMapping(FeatureBins.size()));
-                ThroughHostBroadcast(FeatureBins, bins);
+                bins.Reset(NCudaLib::TMirrorMapping(Nodes.size()));
+                ThroughHostBroadcast(Nodes, bins);
 
                 if (Streams.size()) {
                     NCudaLib::GetCudaManager().WaitComplete();
@@ -101,14 +100,14 @@ namespace NCatboostCuda {
 
             TVector<TStripeBuffer<ui32>*> Cursors;
             TVector<TSlice> FeaturesSlices;
-            TVector<ui8> FeatureBins;
+            TVector<ui8> Nodes;
             NCudaLib::TParallelStripeVectorBuilder<TCFeature> FeaturesBuilder;
         };
 
     }
-    TAddDocParallelObliviousTree& TAddDocParallelObliviousTree::AddTask(const TObliviousTreeModel& model,
-                                                                        const TAddDocParallelObliviousTree::TDataSet& dataSet,
-                                                                        TStripeBuffer<float>& cursor) {
+    TAddModelDocParallel<TObliviousTreeModel>& TAddModelDocParallel<TObliviousTreeModel>::AddTask(const TObliviousTreeModel& model,
+                                                                                                  const TAddModelDocParallel<TObliviousTreeModel>::TDataSet& dataSet,
+                                                                                                  TStripeBuffer<float>& cursor) {
         if (CompressedIndex == nullptr) {
             CompressedIndex = &dataSet.GetCompressedIndex();
         } else {
@@ -148,7 +147,7 @@ namespace NCatboostCuda {
         return *this;
     }
 
-    void TAddDocParallelObliviousTree::Proceed() {
+    void TAddModelDocParallel<TObliviousTreeModel>::Proceed() {
         TMirrorBuffer<float> leaves;
         TMirrorBuffer<ui8> bins;
         TStripeBuffer<TCFeature> features;
@@ -158,7 +157,7 @@ namespace NCatboostCuda {
         ThroughHostBroadcast(CpuLeaves, leaves);
         ThroughHostBroadcast(FeatureBins, bins);
 
-        if (Streams.size()) {
+        if (!Streams.empty()) {
             NCudaLib::GetCudaManager().WaitComplete();
         }
 
@@ -173,7 +172,7 @@ namespace NCatboostCuda {
 
             auto taskBins = bins.SliceView(featuresSlice);
 
-            const ui32 streamId = Streams.size() ? Streams[taskId % Streams.size()].GetId() : 0;
+            const ui32 streamId = !Streams.empty() ? Streams[taskId % Streams.size()].GetId() : 0;
             Append(taskId,
                    taskFeatures,
                    taskBins,
@@ -181,21 +180,20 @@ namespace NCatboostCuda {
                    streamId);
         }
 
-        if (Streams.size()) {
+        if (!Streams.empty()) {
             NCudaLib::GetCudaManager().WaitComplete();
         }
     }
 
-    void TAddDocParallelObliviousTree::Append(ui32 taskId, const TStripeBuffer<TCFeature>& features,
-                                              const TMirrorBuffer<ui8>& bins, const TMirrorBuffer<float>& values,
-                                              ui32 stream) {
+    void TAddModelDocParallel<TObliviousTreeModel>::Append(ui32 taskId, const TStripeBuffer<TCFeature>& features,
+                                                           const TMirrorBuffer<ui8>& bins, const TMirrorBuffer<float>& values,
+                                                           ui32 stream) {
         auto& cursor = *Cursors[taskId];
         AddObliviousTree(CompressedIndex->GetStorage(), features, bins, values, cursor, stream);
     }
 
-
     void ComputeBinsForModel(const TObliviousTreeStructure& structure, const TDocParallelDataSet& dataSet,
-                             TStripeBuffer<ui32>* bins)  {
+                             TStripeBuffer<ui32>* bins) {
         TComputeLeavesDocParallel computeLeaves;
         computeLeaves.AddTask(structure,
                               dataSet,

@@ -89,6 +89,7 @@ namespace {
             auto featuresCpu = NCudaLib::ReadToDistributedObjectVec(features);
             const ui64 groupSize = GetFeaturesPerInt(policy);
             CB_ENSURE(featureIds.size() == featuresCpu.size());
+
             const ui32 alignedSize = static_cast<const ui32>(NHelpers::CeilDivide(featureIds.size(), groupSize) * groupSize);
             const ui32 devCount = static_cast<const ui32>(NCudaLib::GetCudaManager().GetDeviceCount());
 
@@ -128,7 +129,7 @@ namespace {
          * On second we build groups to compute, thus we could combine features from different "datasets" in one compute group
          * this pass just splits everything, no reduce-scatter and other stuff builiding
          */
-        TVector<TPolicyFeatures> Build(ui32 optimalSingleStreamGroupSize) {
+        TVector<TPolicyFeatures> Build(ui32 optimalSingleStreamGroupSize, bool forceOneBlock) {
             TVector<TPolicyFeatures> groups;
 
             for (auto& computePolicy : Features) {
@@ -142,7 +143,7 @@ namespace {
                 CB_ENSURE(featureCount % featuresPerInt == 0, "Should be already aligned");
 
                 const ui32 columnCount = static_cast<const ui32>(::NHelpers::CeilDivide(allPolicyFeatures.FeaturesIds.size(), featuresPerInt));
-                const ui32 groupCount = ::NHelpers::CeilDivide(columnCount, optimalSingleStreamGroupSize);
+                const ui32 groupCount = forceOneBlock ? 1 : ::NHelpers::CeilDivide(columnCount, optimalSingleStreamGroupSize);
                 const ui32 featuresPerGroup = ::NHelpers::CeilDivide(columnCount, groupCount) * featuresPerInt;
 
                 for (ui32 firstFeature = 0; firstFeature < featureCount; firstFeature += featuresPerGroup) {
@@ -225,7 +226,7 @@ namespace {
                         binFeatureCountAfterReduceOnDevices[dev]++;
                     }
                 }
-        }
+            }
 
             {
                 auto afterReduceMapping = NCudaLib::TStripeMapping::CreateFromSizes(binFeatureCountAfterReduceOnDevices);
@@ -302,8 +303,6 @@ namespace {
     };
 }
 
-
-
 void NCatboostCuda::TComputeSplitPropertiesByBlocksHelper::Rebuild(const TComputeByBlocksConfig& splitPropsConfig) {
     //< 1GB for 2 workings streams
     const ui32 optimalGroupSize = Min<ui32>(32, (ui32)EstimateMaxTempVecsForGather(DataSet, splitPropsConfig.SampleRate) / StreamsCount);
@@ -331,7 +330,7 @@ void NCatboostCuda::TComputeSplitPropertiesByBlocksHelper::Rebuild(const TComput
                 }
             }
         }
-        groups = groupsBuilder.Build(optimalGroupSize);
+        groups = groupsBuilder.Build(optimalGroupSize, splitPropsConfig.ForceOneBlockPerPolicy);
     }
 
     TReduceScatterGroupsBuilder reduceScatterGroupsBuilder;
@@ -356,7 +355,7 @@ void NCatboostCuda::TComputeSplitPropertiesByBlocksHelper::Rebuild(const TComput
 
     CATBOOST_DEBUG_LOG << "Compute blocks:" << Endl;
     for (ui32 i = 0; i < BlockPolicies.size(); ++i) {
-        CATBOOST_DEBUG_LOG << BlockPolicies[i] << " "<< BlockSlices[i] << Endl;
+        CATBOOST_DEBUG_LOG << BlockPolicies[i] << " " << BlockSlices[i] << Endl;
     }
 }
 
@@ -375,14 +374,15 @@ inline double GetTakenFraction(const NCatboostOptions::TBootstrapConfig& options
     return 1.0;
 }
 
-
 TComputeSplitPropertiesByBlocksHelper& NCatboostCuda::GetComputeByBlocksHelper(const TDocParallelDataSet& dataSet,
-                                                                               const TTreeStructureSearcherOptions& options) {
+                                                                               const TTreeStructureSearcherOptions& options,
+                                                                               ui32 statCount) {
     TComputeByBlocksConfig config;
     config.SampleRate = GetTakenFraction(options.BootstrapOptions);
+    config.ForceOneBlockPerPolicy = statCount <= 2;
+    config.StreamCount = statCount <= 2 ? 1 : 3;
 
     return *dataSet.Cache(config, [&]() -> THolder<TComputeSplitPropertiesByBlocksHelper> {
         return MakeHolder<TComputeSplitPropertiesByBlocksHelper>(dataSet, config);
     });
 }
-

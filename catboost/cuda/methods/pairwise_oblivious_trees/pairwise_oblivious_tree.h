@@ -40,12 +40,12 @@ namespace NCatboostCuda {
         TDocParallelLeavesEstimator CreateEstimator() {
             CB_ENSURE(NeedEstimation());
             return TDocParallelLeavesEstimator(CreateLeavesEstimationConfig(TreeConfig,
-                                                                           ZeroAverage));
+                                                                            ZeroAverage));
         }
 
         template <class TDataSet>
-        TAddDocParallelObliviousTree CreateAddModelValue(bool useStreams = false) {
-            return TAddDocParallelObliviousTree(useStreams);
+        TAddModelDocParallel<TObliviousTreeModel> CreateAddModelValue(bool useStreams = false) {
+            return TAddModelDocParallel<TObliviousTreeModel>(useStreams);
         }
 
     private:
