@@ -3,21 +3,13 @@
 #include "fwd.h"
 
 #include <util/generic/ptr.h>
-#include <util/system/atomic.h>
 #include <util/system/yassert.h>
-#include "lfstack.h"
-
-#if !defined(LIST_INVERTOR_TLS_POD) && 0
-# include <util/system/tls.h>
-# define LIST_INVERTOR_TLS_POD
-# define LIST_INVERTOR_GET(A) TlsRef(A)
-#elif !defined(LIST_INVERTOR_TLS) && 0
-# include <util/system/tls.h>
-# define LIST_INVERTOR_TLS
-# define LIST_INVERTOR_GET(A) TlsRef(A)
+#if defined(__TBB)
+# include <tbb/concurrent_queue.h>
 #else
-# define LIST_INVERTOR_GET(A) A
+# include <util/system/atomic.h>
 #endif
+
 
 struct TDefaultLFCounter {
     template <class T>
@@ -32,6 +24,17 @@ struct TDefaultLFCounter {
 
 template <class T, class TCounter>
 class TLockFreeQueue: public TNonCopyable {
+#if defined(__TBB)
+    // using inheritance to be able to use 0 bytes for TCounter when we don't need one
+    struct TLockFreeQueueImpl: public TCounter {
+        tbb::concurrent_queue<T> queue_;
+        
+        void CopyCounter(const TLockFreeQueueImpl& x) {
+            const TCounter& rhs = x;
+            *(TCounter*)this = rhs;
+        }
+    } impl_;
+#else
     struct TListNode {
         template <typename U>
         TListNode(U&& u, TListNode* next)
@@ -136,26 +139,15 @@ class TLockFreeQueue: public TNonCopyable {
         TListNode* Copy;
         TListNode* Tail;
         TListNode* PrevFirst;
-#if defined(LIST_INVERTOR_TLS_POD) || defined(LIST_INVERTOR_TLS)
-        TListNode* Recycle;
-#endif
-#if !defined(LIST_INVERTOR_TLS_POD)
         TListInvertor()
             : Copy(nullptr)
             , Tail(nullptr)
             , PrevFirst(nullptr)
-# if defined(LIST_INVERTOR_TLS)
-            , Recycle(nullptr)
-# endif
         {
         }
         ~TListInvertor() {
             EraseList(Copy);
-# if defined(LIST_INVERTOR_TLS)
-            EraseList(Recycle);
-# endif
         }
-#endif
         void CopyWasUsed() {
             Copy = nullptr;
             Tail = nullptr;
@@ -175,29 +167,13 @@ class TLockFreeQueue: public TNonCopyable {
                         newTail = Tail; // tried to invert same list
                     break;
                 }
-                TListNode* newElem;
-#if defined(LIST_INVERTOR_TLS_POD) || defined(LIST_INVERTOR_TLS)
-                if (Recycle) {
-                    newElem = Recycle;
-                    Recycle = Recycle->Next;
-                    newElem->Data = ptr->Data;
-                    newElem->Next = newCopy;
-                }
-                else
-#endif
-                {
-                    newElem = new TListNode(ptr->Data, newCopy);
-                }
+                TListNode* newElem = new TListNode(ptr->Data, newCopy);
                 newCopy = newElem;
                 ptr = AtomicGet(ptr->Next);
                 if (!newTail)
                     newTail = newElem;
             }
-#if defined(LIST_INVERTOR_TLS_POD) || defined(LIST_INVERTOR_TLS)
-            Recycle = Copy; // copy was useless
-#else
             EraseList(Copy); // copy was useless
-#endif
             Copy = newCopy;
             PrevFirst = newFirst;
             Tail = newTail;
@@ -227,8 +203,10 @@ class TLockFreeQueue: public TNonCopyable {
             }
         }
     }
+#endif /*defined(__TBB)*/
 
 public:
+#if !defined(__TBB)
     TLockFreeQueue()
         : JobQueue(new TRootNode)
         , FreememCounter(0)
@@ -243,18 +221,34 @@ public:
         EraseList(JobQueue->PopQueue);
         delete JobQueue;
     }
+#endif
     template <typename U>
     void Enqueue(U&& data) {
+#if defined(__TBB)
+        impl_.IncCount(data);
+        impl_.push(std::forward<U>(data));
+#else
         TListNode* newNode = new TListNode(std::forward<U>(data));
         EnqueueImpl(newNode, newNode);
+#endif
     }
     void Enqueue(T&& data) {
+#if defined(__TBB)
+        impl_.IncCount(data);
+        impl_.push(std::move(data));
+#else
         TListNode* newNode = new TListNode(std::move(data));
         EnqueueImpl(newNode, newNode);
+#endif
     }
     void Enqueue(const T& data) {
+#if defined(__TBB)
+        impl_.IncCount(data);
+        impl_.push(data);
+#else
         TListNode* newNode = new TListNode(data);
         EnqueueImpl(newNode, newNode);
+#endif
     }
     template <typename TCollection>
     void EnqueueAll(const TCollection& data) {
@@ -262,6 +256,11 @@ public:
     }
     template <typename TIter>
     void EnqueueAll(TIter dataBegin, TIter dataEnd) {
+#if defined(__TBB)
+        for (TIter i = dataBegin; i != dataEnd; ++i) {
+            this->Enqueue(*i);
+        }
+#else
         if (dataBegin == dataEnd)
             return;
 
@@ -274,18 +273,20 @@ public:
             node = new TListNode(*i, nextNode);
         }
         EnqueueImpl(node, tail);
+#endif
     }
     bool Dequeue(T* data) {
-        TRootNode* newRoot = nullptr;
-#if defined(LIST_INVERTOR_TLS_POD)
-        Y_POD_STATIC_THREAD(TListInvertor) listInvertor;
-        LIST_INVERTOR_GET(listInvertor).CopyWasUsed();
-#elif defined(LIST_INVERTOR_TLS)
-        Y_STATIC_THREAD(TListInvertor) listInvertor;
-        LIST_INVERTOR_GET(listInvertor).CopyWasUsed();
+#if defined(__TBB)
+        T value;
+        const bool dequeued = impl_.try_pop(value);
+        if (dequeued) {
+            Y_ASSERT(NULL != data);
+            *data = std::move(dst);
+        }
+        return dequeued;
 #else
+        TRootNode* newRoot = nullptr;
         TListInvertor listInvertor;
-#endif
         AsyncRef();
         for (;;) {
             TRootNode* curRoot = AtomicGet(JobQueue);
@@ -329,7 +330,16 @@ public:
                 AtomicSet(newRoot->PopQueue, nullptr);
             }
         }
+#endif
     }
+#if defined(__TBB)
+    bool IsEmpty() const {
+        return impl_.empty();
+    }
+    TCounter GetCounter() const {
+        return *(const TCounter*)&impl_;
+    }
+#else
     bool IsEmpty() {
         AsyncRef();
         TRootNode* curRoot = AtomicGet(JobQueue);
@@ -344,6 +354,7 @@ public:
         AsyncUnref();
         return res;
     }
+#endif
 };
 
 template <class T, class TCounter>
