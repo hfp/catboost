@@ -1552,10 +1552,19 @@ def test_classification_ctr(task_type):
     return compare_canonical_models(output_model_path)
 
 
-@fails_on_gpu(how="libs/options/catboost_options.cpp:280: Error: GPU doesn't not support target binarization per CTR description currently. Please use target_borders option instead")
+@fails_on_gpu(how="libs/options/catboost_options.cpp:280: Error: GPU doesn't not support target binarization per CTR description currently. Please use ctr_target_border_count option instead")
 def test_regression_ctr(task_type):
     pool = Pool(TRAIN_FILE, column_description=CD_FILE)
     model = CatBoostRegressor(iterations=5, learning_rate=0.03, ctr_description=['Borders:TargetBorderCount=5:TargetBorderType=Uniform', 'Counter'], task_type=task_type, devices='0')
+    model.fit(pool)
+    output_model_path = test_output_path(OUTPUT_MODEL_PATH)
+    model.save_model(output_model_path)
+    return compare_canonical_models(output_model_path)
+
+
+def test_ctr_target_border_count(task_type):
+    pool = Pool(TRAIN_FILE, column_description=CD_FILE)
+    model = CatBoostRegressor(iterations=5, learning_rate=0.03, ctr_target_border_count=5, task_type=task_type, devices='0')
     model.fit(pool)
     output_model_path = test_output_path(OUTPUT_MODEL_PATH)
     model.save_model(output_model_path)
@@ -2490,10 +2499,24 @@ Value_AcceptableAsEmpty = [
     ('NA', True),
     ('Na', True),
     ('na', True),
-    ('-', False),
-    ('n/a', False),
-    ('junk', False),
-    ('None', False),
+    ("#N/A", True),
+    ("#N/A N/A", True),
+    ("#NA", True),
+    ("-1.#IND", True),
+    ("-1.#QNAN", True),
+    ("-NaN", True),
+    ("-nan", True),
+    ("1.#IND", True),
+    ("1.#QNAN", True),
+    ("N/A", True),
+    ("NULL", True),
+    ("n/a", True),
+    ("null", True),
+    ("Null", True),
+    ("none", True),
+    ("None", True),
+    ('-', True),
+    ('junk', False)
 ]
 
 
