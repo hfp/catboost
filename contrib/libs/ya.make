@@ -37,6 +37,7 @@ RECURSE(
     python/ut
     snappy
     sqlite3
+    tbb
     tensorboard
     zlib
     zstd
