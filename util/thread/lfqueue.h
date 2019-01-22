@@ -277,13 +277,12 @@ public:
     }
     bool Dequeue(T* data) {
 #if defined(__TBB)
-        T value;
-        const bool dequeued = impl_.try_pop(value);
-        if (dequeued) {
-            Y_ASSERT(NULL != data);
-            *data = std::move(dst);
+        Y_ASSERT(NULL != data);
+        if (impl_.try_pop(*data)) {
+            impl_.DecCount(*data);
+            return true;
         }
-        return dequeued;
+        return false;
 #else
         TRootNode* newRoot = nullptr;
         TListInvertor listInvertor;
