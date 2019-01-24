@@ -1,15 +1,27 @@
 LIBRARY()
 
-NO_PLATFORM()
+LICENSE(
+    APACHE2
+)
 
-ADDINCL(GLOBAL contrib/libs/tbb/include)
+NO_UTIL()
+NO_RUNTIME()
+NO_JOIN_SRC()
+NO_COMPILER_WARNINGS()
 
-CFLAGS(
+ADDINCL(
+    GLOBAL contrib/libs/tbb/include
+)
+
+CXXFLAGS(
     -D__TBB
 )
 
 LDFLAGS(
     -Lcontrib/libs/tbb/lib/intel64/gcc4.7
+)
+
+EXTRALIBS(
     -ltbb
 )
 
