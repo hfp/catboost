@@ -1255,7 +1255,7 @@
         },
         "arc": {
             "formula": {
-                "sandbox_id": [363633874],
+                "sandbox_id": [366051836],
                 "match": "arc"
             },
             "executable": {
@@ -1764,7 +1764,7 @@
         },
         "zipatcher": {
             "formula": {
-                "sandbox_id": 358941237,
+                "sandbox_id": 366228984,
                 "match": "zipatcher"
             },
             "executable": {
