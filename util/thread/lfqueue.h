@@ -1,6 +1,7 @@
 #pragma once
 
 #include "fwd.h"
+#include "lfstack.h"
 
 #include <util/generic/ptr.h>
 #include <util/system/yassert.h>
