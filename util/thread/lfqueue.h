@@ -317,13 +317,13 @@ public:
             if (!newRoot)
                 newRoot = new TRootNode;
             AtomicSet(newRoot->PushQueue, nullptr);
-            LIST_INVERTOR_GET(listInvertor).DoCopy(AtomicGet(curRoot->PushQueue));
-            newRoot->PopQueue = LIST_INVERTOR_GET(listInvertor).Copy;
+            listInvertor.DoCopy(AtomicGet(curRoot->PushQueue));
+            newRoot->PopQueue = listInvertor.Copy;
             newRoot->CopyCounter(curRoot);
             Y_ASSERT(AtomicGet(curRoot->PopQueue) == nullptr);
             if (AtomicCas(&JobQueue, newRoot, curRoot)) {
                 newRoot = nullptr;
-                LIST_INVERTOR_GET(listInvertor).CopyWasUsed();
+                listInvertor.CopyWasUsed();
                 AsyncDel(curRoot, AtomicGet(curRoot->PushQueue));
             } else {
                 AtomicSet(newRoot->PopQueue, nullptr);
