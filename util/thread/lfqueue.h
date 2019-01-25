@@ -6,7 +6,7 @@
 #include <util/generic/ptr.h>
 #include <util/system/yassert.h>
 #if defined(__TBB)
-# include <tbb/concurrent_queue.h>
+# include <tbb/tbb.h>
 #else
 # include <util/system/atomic.h>
 #endif
