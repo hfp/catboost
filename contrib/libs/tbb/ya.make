@@ -13,7 +13,7 @@ ADDINCL(
     GLOBAL contrib/libs/tbb/include
 )
 
-CXXFLAGS(
+CFLAGS(
     -D__TBB
 )
 
