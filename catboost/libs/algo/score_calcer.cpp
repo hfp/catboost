@@ -139,7 +139,7 @@ inline static void SetSingleIndex(
 #if defined(__TBB)
         parallel_for(docIndexRange.IterParallel(),
         [=](const auto& subrange) {
-            for (int doc : subrange) {
+            for (auto doc = subrange.begin(); doc != subrange.end(); ++doc) {
                 const ui32 originalDocIdx = bucketIndexing[doc];
                 (*singleIdx)[doc] = indexer.GetIndex(indices[doc], bucketIndex[originalDocIdx]);
             }
