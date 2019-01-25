@@ -10,7 +10,7 @@
 
 #include <type_traits>
 
-#if defined(__TBB)
+#if defined(__TBB_PARALLEL)
 # include <tbb/tbb.h>
 #endif
 
@@ -109,7 +109,7 @@ inline static void SetSingleIndex(
 ) {
     const int docCount = fold.GetDocCount();
     const TIndexType* indices = GetDataPtr(fold.Indices);
-#if defined(__TBB)
+#if defined(__TBB_PARALLEL)
     using namespace tbb;
     static affinity_partitioner partitioner;
 #endif
@@ -136,7 +136,7 @@ inline static void SetSingleIndex(
             blockStart = nextBlockStart;
         }
     } else {
-#if defined(__TBB)
+#if defined(__TBB_PARALLEL)
         parallel_for(docIndexRange.IterParallel(),
         [=](const auto& subrange) {
             for (auto doc = subrange.begin(); doc != subrange.end(); ++doc) {
