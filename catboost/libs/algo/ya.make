@@ -66,6 +66,7 @@ PEERDIR(
     library/par
     library/svnversion
     library/threading/local_executor
+    contrib/libs/tbb
 )
 
 END()
