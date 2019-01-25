@@ -77,7 +77,6 @@ namespace NCatboostDistributed {
             localData.PrevTreeLevelStats.Create(
                 { plainFold },
                 CountNonCtrBuckets(
-                    trainData->SplitCounts,
                     *(trainData->TrainData->ObjectsData->GetQuantizedFeaturesInfo()),
                     localData.Params.CatFeatureParams->OneHotMaxSize.Get()),
                 localData.Params.ObliviousTreeOptions->MaxDepth);
@@ -166,13 +165,17 @@ namespace NCatboostDistributed {
         TVector<TOutputType>* mappedInputs
     ) {
         mappedInputs->yresize(inputs.ysize());
-        NPar::ParallelFor(0, inputs.ysize(), [&] (int inputIdx) {
-            mapFunc(inputs[inputIdx], &(*mappedInputs)[inputIdx]);
-        });
+        NPar::ParallelFor(
+            0,
+            inputs.ysize(),
+            [&] (int inputIdx) {
+                mapFunc(inputs[inputIdx], &(*mappedInputs)[inputIdx]);
+            });
     }
 
     template <typename TMapFunc, typename TStatsType>
-    static void MapCandidateList(const TMapFunc mapFunc,
+    static void MapCandidateList(
+        const TMapFunc mapFunc,
         const TCandidateList& candidates,
         TVector<TVector<TStatsType>>* candidateStats
     ) {
@@ -188,14 +191,14 @@ namespace NCatboostDistributed {
         MapVector(mapCandidate, candidates, candidateStats );
     }
 
-    static void CalcStats3D(const NPar::TCtxPtr<TTrainData>& trainData,
+    static void CalcStats3D(
+        const NPar::TCtxPtr<TTrainData>& trainData,
         const TCandidateInfo& candidate,
         TStats3D* stats3D
     ) {
         auto& localData = TLocalTensorSearchData::GetRef();
         CalcStatsAndScores(
             *trainData->TrainData->ObjectsData,
-            trainData->SplitCounts,
             localData.Progress.AveragingFold.GetAllCtrs(),
             localData.SampledDocs,
             localData.SmallestSplitSideDocs,
@@ -220,7 +223,6 @@ namespace NCatboostDistributed {
         auto& localData = TLocalTensorSearchData::GetRef();
         CalcStatsAndScores(
             *trainData->TrainData->ObjectsData,
-            trainData->SplitCounts,
             localData.Progress.AveragingFold.GetAllCtrs(),
             localData.SampledDocs,
             localData.SmallestSplitSideDocs,
@@ -286,12 +288,15 @@ namespace NCatboostDistributed {
         const int workerCount = statsFromAllWorkers->ysize();
         const int bucketCount = (*statsFromAllWorkers)[0].ysize();
         stats->yresize(bucketCount);
-        NPar::ParallelFor(0, bucketCount, [&] (int bucketIdx) {
-            (*stats)[bucketIdx] = (*statsFromAllWorkers)[0][bucketIdx];
-            for (int workerIdx : xrange(1, workerCount)) {
-                (*stats)[bucketIdx].Add((*statsFromAllWorkers)[workerIdx][bucketIdx]);
-            }
-        });
+        NPar::ParallelFor(
+            0,
+            bucketCount,
+            [&] (int bucketIdx) {
+                (*stats)[bucketIdx] = (*statsFromAllWorkers)[0][bucketIdx];
+                for (int workerIdx : xrange(1, workerCount)) {
+                    (*stats)[bucketIdx].Add((*statsFromAllWorkers)[workerIdx][bucketIdx]);
+                }
+            });
     }
 
     // TStats4D -> TVector<TVector<double>> [subcandidate][bucket]

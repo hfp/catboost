@@ -45,7 +45,6 @@ void MapBuildPlainFold(NCB::TTrainingForCPUDataProviderPtr trainData, TLearnCont
     TVector<TArraySubsetIndexing<ui32>> workerParts = Split(*trainData->ObjectsGrouping, (ui32)workerCount);
 
     const ui64 randomSeed = ctx->Rand.GenRand();
-    const auto& splitCounts = CountSplits(ctx->LearnProgress.FloatFeatures);
     const auto& targetClassifiers = ctx->CtrsHelper.GetTargetClassifiers();
     NJson::TJsonValue jsonParams;
     ctx->Params.Save(&jsonParams);
@@ -72,7 +71,6 @@ void MapBuildPlainFold(NCB::TTrainingForCPUDataProviderPtr trainData, TLearnCont
                         EObjectsOrder::Ordered),
                     ctx->LocalExecutor),
                 targetClassifiers,
-                splitCounts,
                 randomSeed,
                 ctx->LearnProgress.ApproxDimension,
                 stringParams,
@@ -118,22 +116,26 @@ void MapGenericCalcScore(
     const int candidateCount = candidateList->ysize();
     const ui64 randSeed = ctx->Rand.GenRand();
     // set best split for each candidate
-    NPar::ParallelFor(*ctx->LocalExecutor, 0, candidateCount, [&] (int candidateIdx) {
-        auto& subCandidates = (*candidateList)[candidateIdx].Candidates;
-        const int subcandidateCount = subCandidates.ysize();
-        TVector<TVector<double>> allScores(subcandidateCount);
-        for (int subcandidateIdx = 0; subcandidateIdx < subcandidateCount; ++subcandidateIdx) {
-            // reduce across workers
-        auto& reducedStats = allStatsFromAllWorkers[0].Data[candidateIdx][subcandidateIdx];
-        for (int workerIdx = 1; workerIdx < workerCount; ++workerIdx) {
-            const auto& stats = allStatsFromAllWorkers[workerIdx].Data[candidateIdx][subcandidateIdx];
-            reducedStats.Add(stats);
-        }
-        const auto& splitInfo = subCandidates[subcandidateIdx];
-        allScores[subcandidateIdx] = getScore(reducedStats, splitInfo);
-    }
-    SetBestScore(randSeed + candidateIdx, allScores, scoreStDev, &subCandidates);
-});
+    NPar::ParallelFor(
+        *ctx->LocalExecutor,
+        0,
+        candidateCount,
+        [&] (int candidateIdx) {
+            auto& subCandidates = (*candidateList)[candidateIdx].Candidates;
+            const int subcandidateCount = subCandidates.ysize();
+            TVector<TVector<double>> allScores(subcandidateCount);
+            for (int subcandidateIdx = 0; subcandidateIdx < subcandidateCount; ++subcandidateIdx) {
+                // reduce across workers
+                auto& reducedStats = allStatsFromAllWorkers[0].Data[candidateIdx][subcandidateIdx];
+                for (int workerIdx = 1; workerIdx < workerCount; ++workerIdx) {
+                    const auto& stats = allStatsFromAllWorkers[workerIdx].Data[candidateIdx][subcandidateIdx];
+                    reducedStats.Add(stats);
+                }
+                const auto& splitInfo = subCandidates[subcandidateIdx];
+                allScores[subcandidateIdx] = getScore(reducedStats, splitInfo);
+            }
+            SetBestScore(randSeed + candidateIdx, allScores, scoreStDev, &subCandidates);
+        });
 }
 
 // TODO(espetrov): Remove unused code.
@@ -165,13 +167,17 @@ void MapGenericRemoteCalcScore(double scoreStDev, TCandidateList* candidateList,
     const int candidateCount = candidateList->ysize();
     Y_ASSERT(candidateCount == allScores.ysize());
     const ui64 randSeed = ctx->Rand.GenRand();
-    ctx->LocalExecutor->ExecRange([&] (int candidateIdx) {
-        SetBestScore(
-            randSeed + candidateIdx,
-            allScores[candidateIdx],
-            scoreStDev,
-            &(*candidateList)[candidateIdx].Candidates);
-    }, 0, candidateCount, NPar::TLocalExecutor::WAIT_COMPLETE);
+    ctx->LocalExecutor->ExecRange(
+        [&] (int candidateIdx) {
+            SetBestScore(
+                randSeed + candidateIdx,
+                allScores[candidateIdx],
+                scoreStDev,
+                &(*candidateList)[candidateIdx].Candidates);
+        },
+        0,
+        candidateCount,
+        NPar::TLocalExecutor::WAIT_COMPLETE);
 }
 
 void MapRemotePairwiseCalcScore(double scoreStDev, TCandidateList* candidateList, TLearnContext* ctx) {

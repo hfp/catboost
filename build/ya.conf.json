@@ -1210,7 +1210,7 @@
         },
         "ymake": {
             "formula": {
-                "sandbox_id": [365767636],
+                "sandbox_id": [367051896],
                 "match": "ymake"
             },
             "executable": {
@@ -1228,7 +1228,7 @@
         },
         "test_tool": {
             "formula": {
-                "sandbox_id": [364035950],
+                "sandbox_id": [367125162],
                 "match": "test_tool"
             },
             "executable": {
@@ -1255,7 +1255,7 @@
         },
         "arc": {
             "formula": {
-                "sandbox_id": [366051836],
+                "sandbox_id": [367180606],
                 "match": "arc"
             },
             "executable": {
@@ -1656,11 +1656,11 @@
         },
         "yp-util": {
             "formula": {
-                "sandbox_id":  [353295496],
-                "match": "yp_cli"
+                "sandbox_id":  [366900797],
+                "match": "yp_util"
             },
             "executable": {
-                "yp-util": ["yp_cli"]
+                "yp-util": ["yp_util"]
             }
         },
         "yp": {
