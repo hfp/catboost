@@ -14,7 +14,7 @@ ADDINCL(
 )
 
 CFLAGS(
-    -D__TBB
+    GLOBAL -D__TBB
 )
 
 LDFLAGS(
