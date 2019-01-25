@@ -374,9 +374,9 @@ ENDIF()
 JOIN_SRCS(
     all_thread.cpp
     thread/fwd.cpp
+    thread/factory.cpp
     thread/lfqueue.cpp
     thread/lfstack.cpp
-    thread/pool.cpp
     thread/queue.cpp
     thread/singleton.cpp
 )
