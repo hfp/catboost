@@ -4,6 +4,9 @@
 #include <util/generic/xrange.h>
 #include <util/generic/ymath.h>
 #include <util/system/yassert.h>
+#if defined(__TBB)
+# include <tbb/tbb.h>
+#endif
 
 // TODO(akhropov): move back to libs/helpers when circular dependencies with libs/data_types are resolved
 
@@ -47,6 +50,11 @@ namespace NCB {
         constexpr auto Iter() const {
             return xrange(Begin, End);
         }
+#if defined(__TBB)
+        constexpr auto IterParallel() const {
+            return tbb::blocked_range<TSize>(Begin, End);
+        }
+#endif
     };
 
     template <class TSize>

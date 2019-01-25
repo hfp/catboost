@@ -10,6 +10,10 @@
 
 #include <type_traits>
 
+#if defined(__TBB)
+# include <tbb/tbb.h>
+#endif
+
 using namespace NCB;
 
 
@@ -105,7 +109,10 @@ inline static void SetSingleIndex(
 ) {
     const int docCount = fold.GetDocCount();
     const TIndexType* indices = GetDataPtr(fold.Indices);
-
+#if defined(__TBB)
+    using namespace tbb;
+    static affinity_partitioner partitioner;
+#endif
     if (bucketIndexing == nullptr) {
         for (int doc : docIndexRange.Iter()) {
             (*singleIdx)[doc] = indexer.GetIndex(indices[doc], bucketIndex[bucketBeginOffset + doc]);
@@ -129,10 +136,20 @@ inline static void SetSingleIndex(
             blockStart = nextBlockStart;
         }
     } else {
+#if defined(__TBB)
+        parallel_for(docIndexRange.IterParallel(),
+        [=](const auto& subrange) {
+            for (int doc : subrange) {
+                const ui32 originalDocIdx = bucketIndexing[doc];
+                (*singleIdx)[doc] = indexer.GetIndex(indices[doc], bucketIndex[originalDocIdx]);
+            }
+        }, partitioner);
+#else
         for (int doc : docIndexRange.Iter()) {
             const ui32 originalDocIdx = bucketIndexing[doc];
             (*singleIdx)[doc] = indexer.GetIndex(indices[doc], bucketIndex[originalDocIdx]);
         }
+#endif
     }
 }
 
