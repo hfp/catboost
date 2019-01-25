@@ -1,7 +1,6 @@
 #!/bin/bash
 
 DIRNAME=$(command -v dirname)
-MKDIR=$(command -v mkdir)
 SORT=$(command -v sort)
 TAIL=$(command -v tail)
 ENV=$(command -v env)
@@ -11,7 +10,7 @@ CP=$(command -v cp)
 TBBPREFIX="/opt/intel /usr/local ${HOME}"
 HERE=$(cd $(${DIRNAME} $0); pwd -P)
 
-if [ "" != "${MKDIR}" ] && [ "" != "${DIRNAME}" ] && \
+if [ "" != "${DIRNAME}" ] && \
    [ "" != "${SORT}" ] && [ "" != "${TAIL}" ] && \
    [ "" != "${RM}" ] && [ "" != "${CP}" ];
 then
@@ -30,21 +29,26 @@ then
     read -p "Installing to ${HERE}? [Y/N]" -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-      if [ -d ${HERE}/include/tbb ]; then
-        echo "Deleting old directory include/tbb"
-        ${RM} -r ${HERE}/include/tbb
+      if [ -d ${HERE}/include ]; then
+        echo -n " delete old directory include, and"
+        ${RM} -r ${HERE}/include
       fi
-      echo "Copying ${TBBROOT}/include/tbb"
-      ${MKDIR} -p ${HERE}/include
-      ${CP} -Hr ${TBBROOT}/include/tbb ${HERE}/include
+      echo " deep-copy ${TBBROOT}/include"
+      ${CP} -Lr ${TBBROOT}/include ${HERE}
+      # truncate tbb_annotate.h to avoid external reference to advisor-annotate.h
+      if [ -e ${HERE}/include/serial/tbb/tbb_annotate.h ]; then
+        ${CP} /dev/null ${HERE}/include/serial/tbb/tbb_annotate.h
+      fi
       if [ -d ${HERE}/lib ]; then
-        echo "Deleting old directory lib"
+        echo -n " delete old directory lib, and"
         ${RM} -r ${HERE}/lib
       fi
-      echo "Copying ${TBBROOT}/lib"
-      ${CP} -Hr ${TBBROOT}/lib ${HERE}
+      echo " depp-copy ${TBBROOT}/lib"
+      ${CP} -Lr ${TBBROOT}/lib ${HERE}
+      echo "Successfully completed."
     else
-      exit 1
+      echo "No action performed."
+      exit 0
     fi
   fi
 else
