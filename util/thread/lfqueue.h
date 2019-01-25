@@ -227,7 +227,7 @@ public:
     void Enqueue(U&& data) {
 #if defined(__TBB)
         impl_.IncCount(data);
-        impl_.push(std::forward<U>(data));
+        impl_.queue_.push(std::forward<U>(data));
 #else
         TListNode* newNode = new TListNode(std::forward<U>(data));
         EnqueueImpl(newNode, newNode);
@@ -236,7 +236,7 @@ public:
     void Enqueue(T&& data) {
 #if defined(__TBB)
         impl_.IncCount(data);
-        impl_.push(std::move(data));
+        impl_.queue_.push(std::move(data));
 #else
         TListNode* newNode = new TListNode(std::move(data));
         EnqueueImpl(newNode, newNode);
@@ -245,7 +245,7 @@ public:
     void Enqueue(const T& data) {
 #if defined(__TBB)
         impl_.IncCount(data);
-        impl_.push(data);
+        impl_.queue_.push(data);
 #else
         TListNode* newNode = new TListNode(data);
         EnqueueImpl(newNode, newNode);
@@ -279,7 +279,7 @@ public:
     bool Dequeue(T* data) {
 #if defined(__TBB)
         Y_ASSERT(NULL != data);
-        if (impl_.try_pop(*data)) {
+        if (impl_.queue_.try_pop(*data)) {
             impl_.DecCount(*data);
             return true;
         }
@@ -334,7 +334,7 @@ public:
     }
 #if defined(__TBB)
     bool IsEmpty() const {
-        return impl_.empty();
+        return impl_.queue_.empty();
     }
     TCounter GetCounter() const {
         return *(const TCounter*)&impl_;
