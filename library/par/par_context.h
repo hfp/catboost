@@ -312,10 +312,8 @@ namespace NPar {
 
             template <class T>
             void ClearPodArray(TVector<T>* res, ssize_t size) {
-                res->yresize(size);
-                if (res->empty())
-                    return;
-                memset(&(*res)[0], 0, sizeof(T) * res->size());
+                Y_ASSERT(NULL != res);
+                res->assign(size, 0);
             }
 
             void ResetHostIdReady(int hostId, int partCount) {
