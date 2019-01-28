@@ -1303,12 +1303,13 @@ class GnuCompiler(Compiler):
         self.c_warnings = ['-W', '-Wall', '-Wno-parentheses']
         self.cxx_warnings = [
             '-Woverloaded-virtual', '-Wno-invalid-offsetof', '-Wno-attributes',
-            '-Wno-dynamic-exception-spec',  # IGNIETFERRO-282 some problems with lucid
             '-Wno-register',  # IGNIETFERRO-722 needed for contrib
         ]
+        if self.tc.is_clang:  # IGNIETFERRO-282 some problems with lucid
+            self.cxx_warnings.append('-Wno-dynamic-exception-spec')
         self.c_defines = [
             '-DFAKEID=$FAKEID', '-DARCADIA_ROOT=${ARCADIA_ROOT}', '-DARCADIA_BUILD_ROOT=${ARCADIA_BUILD_ROOT}',
-            '-D_THREAD_SAFE', '-D_PTHREADS', '-D_REENTRANT', '-D_LIBCPP_ENABLE_CXX17_REMOVED_FEATURES',
+            '-D_THREAD_SAFE', '-D_PTHREADS', '-D_REENTRANT', #'-D_LIBCPP_ENABLE_CXX17_REMOVED_FEATURES',
             '-D_LARGEFILE_SOURCE', '-D__STDC_CONSTANT_MACROS', '-D__STDC_FORMAT_MACROS', '-DGNU',
         ]
         self.c_flags = []
@@ -1437,7 +1438,7 @@ class GnuCompiler(Compiler):
             }''')
 
         append('CFLAGS', self.c_flags, '$DEBUG_INFO_FLAGS', '$PICFLAGS', self.c_foptions, '$C_WARNING_OPTS', '$GCC_PREPROCESSOR_OPTS', '$USER_CFLAGS', '$USER_CFLAGS_GLOBAL')
-        append('CXXFLAGS', '$CFLAGS', '-std=c++1z', '$CXX_WARNING_OPTS', '$USER_CXXFLAGS')
+        append('CXXFLAGS', '$CFLAGS', '$CXX_WARNING_OPTS', '$USER_CXXFLAGS')
         append('CONLYFLAGS', '$USER_CONLYFLAGS')
         emit('CXX_COMPILER_UNQUOTED', self.tc.cxx_compiler)
         emit('CXX_COMPILER', '${quo:CXX_COMPILER_UNQUOTED}')
