@@ -4,6 +4,7 @@
 
 #include <util/generic/fwd.h>
 #include <util/generic/utility.h>
+#include <util/generic/vector.h>
 
 #include <algorithm>
 #include <initializer_list>
@@ -50,6 +51,18 @@ public:
     constexpr inline TArrayRef(std::initializer_list<T> list) noexcept
         : T_(list.begin())
         , S_(list.size())
+    {
+    }
+
+    constexpr inline TArrayRef(TVector<bool>& container) noexcept
+        : T_(reinterpret_cast<bool*>(container.data()))
+        , S_(container.size())
+    {
+    }
+
+    constexpr inline TArrayRef(const TVector<bool>& container) noexcept
+        : T_(reinterpret_cast<const bool*>(container.data()))
+        , S_(container.size())
     {
     }
 

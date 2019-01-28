@@ -8,12 +8,31 @@
 #include <vector>
 #include <initializer_list>
 
+template <class T>
+struct TVectorTraits {
+    using Type = typename std::remove_cv<T>::type;
+};
+
+template <>
+struct TVectorTraits<bool> {
+    struct Type { // proxy-type to avoid vector<bool> specialization
+        inline Type(): value(false) {}
+        inline Type(bool v): value(v) {}
+        inline operator bool&() noexcept { return value; }
+        inline operator const bool&() const noexcept { return value; }
+        inline bool* operator&() noexcept { return &value; }
+        inline const bool* operator&() const noexcept { return &value; }
+        inline Type& operator=(bool v) noexcept { value = v; return *this; }
+        bool value;
+    };
+};
+
 template <class T, class A>
-class TVector: public std::vector<typename std::remove_cv<T>::type,
-                        TReboundAllocator<A, typename std::remove_cv<T>::type>>
+class TVector: public std::vector<typename TVectorTraits<T>::Type,
+    TReboundAllocator<A, typename TVectorTraits<T>::Type>>
 {
 public:
-    using TValue = typename std::remove_cv<T>::type;
+    using TValue = typename TVectorTraits<T>::Type;
     using TBase = std::vector<TValue, TReboundAllocator<A, TValue>>;
     using TSelf = TVector<T, A>;
     using size_type = typename TBase::size_type;
