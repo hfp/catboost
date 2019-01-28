@@ -1312,6 +1312,9 @@ class GnuCompiler(Compiler):
             '-D_THREAD_SAFE', '-D_PTHREADS', '-D_REENTRANT',  #'-D_LIBCPP_ENABLE_CXX17_REMOVED_FEATURES',
             '-D_LARGEFILE_SOURCE', '-D__STDC_CONSTANT_MACROS', '-D__STDC_FORMAT_MACROS', '-DGNU',
         ]
+        if not self.tc.is_clang:
+            c_defines.append('-D__has_feature(A)=0')
+            c_defines.append('-D__has_builtin(A)=0')
         self.c_flags = []
 
         if not self.target.is_android:
