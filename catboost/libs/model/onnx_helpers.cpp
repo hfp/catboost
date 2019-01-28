@@ -358,7 +358,7 @@ static void AddTree(
     }
 
     // Process leafs
-    const double* leafValue = trees.LeafValues.begin() + trees.GetFirstLeafOffsets()[treeIdx];
+    const double* leafValue = &*(trees.LeafValues.begin() + trees.GetFirstLeafOffsets()[treeIdx]);
 
     for (i64 endNodeIdx = 2*nodeIdx + 1; nodeIdx < endNodeIdx; ++nodeIdx) {
         treesAttributes->nodes_treeids->add_ints(treeIdx);

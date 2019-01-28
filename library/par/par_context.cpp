@@ -61,11 +61,10 @@ namespace NPar {
         for (THashMap<int, TFullCtxInfo>::iterator i = EnvId2Info.begin(); i != EnvId2Info.end(); ++i) {
             TFullCtxInfo& info = i->second;
             for (int hostId = 0; hostId < info.HostId2Computer.ysize(); ++hostId) {
-                bool& isFullyDistributed = info.IsFullyDistributed[hostId];
-                if (isFullyDistributed)
+                if (info.IsFullyDistributed[hostId])
                     continue;
 
-                isFullyDistributed = true;
+                info.IsFullyDistributed[hostId] = true;
                 const TVector<int>& compList = info.HostId2Computer[hostId];
                 int partCount = info.Data[hostId].GetPartCount();
                 for (int part = 0; part < partCount; ++part) {
@@ -83,7 +82,7 @@ namespace NPar {
                                 src.SrcComps.push_back(compId);
                             }
                         } else {
-                            isFullyDistributed = false;
+                            info.IsFullyDistributed[hostId] = false;
                             allComplete = false;
                             if (!info.CopyInitiated[compId][part]) {
                                 target.push_back(compId);

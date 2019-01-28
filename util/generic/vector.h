@@ -9,7 +9,9 @@
 #include <initializer_list>
 
 template <class T, class A>
-class TVector: public std::vector<T, TReboundAllocator<A, T>> {
+class TVector: public std::vector<typename std::remove_const<T>::type,
+                        TReboundAllocator<A, typename std::remove_const<T>::type>>
+{
 public:
     using TBase = std::vector<T, TReboundAllocator<A, T>>;
     using TSelf = TVector<T, A>;

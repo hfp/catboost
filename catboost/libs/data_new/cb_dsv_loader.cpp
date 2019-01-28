@@ -92,8 +92,8 @@ namespace NCB {
 
             TDsvLineParser parser(
                 FieldDelimiter,
-                DataMetaInfo.ColumnsInfo->Columns,
-                FeatureIgnored,
+                TConstArrayRef<TColumn>(DataMetaInfo.ColumnsInfo->Columns),
+                TConstArrayRef<bool>(FeatureIgnored),
                 featuresLayout,
                 floatFeatures,
                 catFeatures,
