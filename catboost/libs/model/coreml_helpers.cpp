@@ -7,6 +7,7 @@
 #include <util/generic/set.h>
 #include <util/generic/vector.h>
 
+#include <cmath>
 
 using namespace CoreML::Specification;
 
