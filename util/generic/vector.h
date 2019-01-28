@@ -13,8 +13,8 @@ class TVector: public std::vector<typename std::remove_cv<T>::type,
                         TReboundAllocator<A, typename std::remove_cv<T>::type>>
 {
 public:
-    using TBase = std::vector<typename std::remove_cv<T>::type,
-                    TReboundAllocator<A, typename std::remove_cv<T>::type>>;
+    using TValue = typename std::remove_cv<T>::type;
+    using TBase = std::vector<TValue, TReboundAllocator<A, TValue>>;
     using TSelf = TVector<T, A>;
     using size_type = typename TBase::size_type;
 
@@ -45,22 +45,22 @@ public:
     {
     }
 
-    inline TVector(size_type count, const T& val)
+    inline TVector(size_type count, const TValue& val)
         : TBase(count, val)
     {
     }
 
-    inline TVector(size_type count, const T& val, const typename TBase::allocator_type& a)
+    inline TVector(size_type count, const TValue& val, const typename TBase::allocator_type& a)
         : TBase(count, val, a)
     {
     }
 
-    inline TVector(std::initializer_list<T> il)
+    inline TVector(std::initializer_list<TValue> il)
         : TBase(il)
     {
     }
 
-    inline TVector(std::initializer_list<T> il, const typename TBase::allocator_type& a)
+    inline TVector(std::initializer_list<TValue> il, const typename TBase::allocator_type& a)
         : TBase(il, a)
     {
     }
@@ -91,7 +91,7 @@ public:
         return *this;
     }
 
-    inline TSelf& operator=(std::initializer_list<T> il) {
+    inline TSelf& operator=(std::initializer_list<TValue> il) {
         this->assign(il.begin(), il.end());
         return *this;
     }
