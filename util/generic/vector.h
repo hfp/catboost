@@ -9,11 +9,12 @@
 #include <initializer_list>
 
 template <class T, class A>
-class TVector: public std::vector<typename std::remove_const<T>::type,
-                        TReboundAllocator<A, typename std::remove_const<T>::type>>
+class TVector: public std::vector<typename std::remove_cv<T>::type,
+                        TReboundAllocator<A, typename std::remove_cv<T>::type>>
 {
 public:
-    using TBase = std::vector<T, TReboundAllocator<A, T>>;
+    using TBase = std::vector<typename std::remove_cv<T>::type,
+                    TReboundAllocator<A, typename std::remove_cv<T>::type>>;
     using TSelf = TVector<T, A>;
     using size_type = typename TBase::size_type;
 
