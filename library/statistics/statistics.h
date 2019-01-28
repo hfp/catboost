@@ -478,7 +478,7 @@ namespace NStatistics {
         double res = 0;
         for (pIt = pBegin, qIt = qBegin; pIt != pEnd; ++pIt, ++qIt) {
             delta += *pIt / pDenominator - *qIt / qDenominator;
-            res = std::max(res, abs(delta));
+            res = std::max(res, std::abs(delta));
         }
         return res;
     }
