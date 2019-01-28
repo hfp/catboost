@@ -290,7 +290,7 @@ TVector<TIndexType> BuildIndices(
             onlineCtrs,
             0,
             localExecutor,
-            indices.begin());
+            &indices[0]);
     }
     ui32 docOffset = learnSampleCount;
     for (size_t testIdx = 0; testIdx < testData.size(); ++testIdx) {
@@ -303,7 +303,7 @@ TVector<TIndexType> BuildIndices(
             onlineCtrs,
             (int)docOffset,
             localExecutor,
-            indices.begin() + docOffset);
+            &indices[docOffset]);
         docOffset += testSet.GetObjectCount();
     }
     return indices;

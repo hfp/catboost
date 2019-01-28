@@ -376,8 +376,8 @@ void ComputeOnlineCTRs(const TTrainingForCPUDataProviders& data,
             *data.Learn->ObjectsData,
             fold.LearnPermutationFeaturesSubset,
             nullptr,
-            hashArr.begin(),
-            hashArr.begin() + learnSampleCount);
+            &hashArr[0],
+            &hashArr[0] + learnSampleCount);
         for (size_t docOffset = learnSampleCount, testIdx = 0; docOffset < totalSampleCount && testIdx < data.Test.size(); ++testIdx) {
             const size_t testSampleCount = data.Test[testIdx]->GetObjectCount();
             CalcHashes(
@@ -385,8 +385,8 @@ void ComputeOnlineCTRs(const TTrainingForCPUDataProviders& data,
                 *data.Test[testIdx]->ObjectsData,
                 data.Test[testIdx]->ObjectsData->GetFeaturesArraySubsetIndexing(),
                 nullptr,
-                hashArr.begin() + docOffset,
-                hashArr.begin() + docOffset + testSampleCount);
+                &hashArr[0] + docOffset,
+                &hashArr[0] + docOffset + testSampleCount);
             docOffset += testSampleCount;
         }
         size_t approxBucketsCount = 1;
@@ -402,12 +402,12 @@ void ComputeOnlineCTRs(const TTrainingForCPUDataProviders& data,
     if (proj.IsSingleCatFeature() && ctx->Params.CatFeatureParams->StoreAllSimpleCtrs) {
         topSize = Max<ui64>();
     }
-    auto leafCount = ComputeReindexHash(topSize, rehashHashTlsVal.GetPtr(), hashArr.begin(), hashArr.begin() + learnSampleCount);
+    auto leafCount = ComputeReindexHash(topSize, rehashHashTlsVal.GetPtr(), &hashArr[0], &hashArr[0] + learnSampleCount);
     dst->CounterUniqueValuesCount = dst->UniqueValuesCount = leafCount;
 
     for (size_t docOffset = learnSampleCount, testIdx = 0; docOffset < totalSampleCount && testIdx < data.Test.size(); ++testIdx) {
         const size_t testSampleCount = data.Test[testIdx]->GetObjectCount();
-        leafCount = UpdateReindexHash(rehashHashTlsVal.GetPtr(), hashArr.begin() + docOffset, hashArr.begin() + docOffset + testSampleCount);
+        leafCount = UpdateReindexHash(rehashHashTlsVal.GetPtr(), &hashArr[0] + docOffset, &hashArr[0] + docOffset + testSampleCount);
         docOffset += testSampleCount;
     }
 
@@ -503,7 +503,7 @@ void CalcFinalCtrsImpl(
     size_t leafCount = 0;
     {
         TDenseHash<ui64, ui32> tmpHash;
-        leafCount = ComputeReindexHash(ctrLeafCountLimit, &tmpHash, hashArr->begin(), hashArr->begin() + totalSampleCount);
+        leafCount = ComputeReindexHash(ctrLeafCountLimit, &tmpHash, &hashArr->front(), &hashArr->front() + totalSampleCount);
         auto hashIndexBuilder = result->GetIndexHashBuilder(leafCount);
         for (const auto& kv : tmpHash) {
             hashIndexBuilder.SetIndex(kv.first, kv.second);
@@ -573,11 +573,11 @@ static void CalcFinalCtrs(
         *datasetDataForFinalCtrs.Data.Learn->ObjectsData,
         learnFeaturesSubsetIndexing,
         &perfectHashedToHashedCatValuesMap,
-        hashArr.begin(),
-        hashArr.begin() + learnSampleCount
+        &hashArr[0],
+        &hashArr[0] + learnSampleCount
     );
     if (totalSampleCount > learnSampleCount) {
-        ui64* testHashBegin = hashArr.begin() + learnSampleCount;
+        ui64* testHashBegin = &hashArr[0] + learnSampleCount;
         for (const auto& testDataPtr : datasetDataForFinalCtrs.Data.Test) {
             ui64* testHashEnd = testHashBegin + testDataPtr->GetObjectCount();
             CalcHashes(

@@ -254,8 +254,8 @@ void TObliviousTrees::TruncateTrees(size_t begin, size_t end) {
             modelSplits.push_back(MetaData->BinFeatures[TreeSplits[splitIdx]]);
         }
         TArrayRef<double> leafValuesRef(
-            LeafValues.begin() + leafOffsets[treeIdx],
-            LeafValues.begin() + leafOffsets[treeIdx] + ApproxDimension * (1u << TreeSizes[treeIdx])
+            &LeafValues[0] + leafOffsets[treeIdx],
+            &LeafValues[0] + leafOffsets[treeIdx] + ApproxDimension * (1u << TreeSizes[treeIdx])
         );
         builder.AddTree(modelSplits, leafValuesRef, LeafWeights[treeIdx]);
     }
@@ -882,15 +882,15 @@ static void StreamModelTreesToBuilder(
         }
         if (leafMultiplier == 1.0) {
             TConstArrayRef<double> leafValuesRef(
-                trees.LeafValues.begin() + leafOffsets[treeIdx],
-                trees.LeafValues.begin() + leafOffsets[treeIdx]
+                &trees.LeafValues[0] + leafOffsets[treeIdx],
+                &trees.LeafValues[0] + leafOffsets[treeIdx]
                     + trees.ApproxDimension * (1u << trees.TreeSizes[treeIdx])
             );
             builder->AddTree(modelSplits, leafValuesRef, trees.LeafWeights[treeIdx]);
         } else {
             TVector<double> leafValues(
-                trees.LeafValues.begin() + leafOffsets[treeIdx],
-                trees.LeafValues.begin() + leafOffsets[treeIdx]
+                &trees.LeafValues[0] + leafOffsets[treeIdx],
+                &trees.LeafValues[0] + leafOffsets[treeIdx]
                     + trees.ApproxDimension * (1u << trees.TreeSizes[treeIdx])
             );
             for (auto& leafValue: leafValues) {
