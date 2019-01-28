@@ -106,6 +106,10 @@ public:
         return (yssize_t)TBase::size();
     }
 
+    inline void yresize(size_type size) {
+        TBase::resize(size);
+    }
+
     inline void crop(size_type size) {
         if (this->size() > size) {
             this->erase(this->begin() + size, this->end());
