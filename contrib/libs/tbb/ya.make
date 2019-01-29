@@ -22,8 +22,7 @@ IF (TBB)
     )
     EXTRALIBS(
         -ltbb
-    )    
-)
+    )
 ENDIF()
 
 END()
