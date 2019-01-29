@@ -1368,7 +1368,8 @@ class GnuCompiler(Compiler):
         self.debug_info_flags = ['-g']
         if self.target.is_linux:
             self.debug_info_flags.append('-ggnu-pubnames')
-        self.c_foptions.append('-fdebug-prefix-map=${ARCADIA_ROOT}/=')
+        if self.tc.is_clang:
+            self.c_foptions.append('-fdebug-prefix-map=${ARCADIA_ROOT}/=')
 
         self.cross_suffix = '' if is_positive('FORCE_NO_PIC') else '.pic'
 
