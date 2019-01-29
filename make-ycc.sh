@@ -6,9 +6,8 @@ HERE=$(cd $(dirname $0); pwd -P)
 #  USE_STL_SYSTEM=yes
 
 export YA_CACHE_DIR=${HOME}/catboost-cache
-export AR=gcc-ar
-export CC=gcc
-unset CXX
+export CC=${HERE}/ycc.sh
+export CXX=${CC}
 
 cd catboost/python-package/catboost
 ${HERE}/ya make -r -k -DHAVE_CUDA=no #-v
