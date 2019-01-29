@@ -4,25 +4,27 @@ LICENSE(
     APACHE2
 )
 
-NO_UTIL()
-NO_RUNTIME()
-NO_JOIN_SRC()
-NO_COMPILER_WARNINGS()
+when ($TBB == "yes") {
+    NO_COMPILER_WARNINGS()
+    NO_JOIN_SRC()
+    NO_RUNTIME()
+    NO_UTIL()
 
-ADDINCL(
-    GLOBAL contrib/libs/tbb/include
-)
+    ADDINCL(
+        GLOBAL contrib/libs/tbb/include
+    )
 
-CFLAGS(
-    GLOBAL -D__TBB
-)
+    CFLAGS(
+        GLOBAL -D__TBB
+    )
 
-LDFLAGS(
-    -Lcontrib/libs/tbb/lib/intel64/gcc4.7
-)
+    LDFLAGS(
+        -Lcontrib/libs/tbb/lib/intel64/gcc4.7
+    )
 
-EXTRALIBS(
-    -ltbb
-)
+    EXTRALIBS(
+        -ltbb
+    )
+}
 
 END()
