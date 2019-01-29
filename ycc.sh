@@ -16,7 +16,6 @@ if [ "" = "${YCC}" ]; then
 fi
 
 NHITS=0
-ARGS=""
 while test $# -gt 0
 do
   case "$1" in
