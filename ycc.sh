@@ -19,13 +19,13 @@ NHITS=0
 while test $# -gt 0
 do
   case "$1" in
-  -E) NHITS=$((NHITS+1)); HIT=$1;
+  -E) NHITS=$((NHITS+1)); HIT="$1";
     ;;
-  -P) NHITS=$((NHITS+1)); HIT=$1;
+  -P) NHITS=$((NHITS+1)); HIT="$1";
     ;;
-  -) NHITS=$((NHITS+1)); HIT=$1;
+  -) NHITS=$((NHITS+1)); HIT="$1";
     ;;
-  *) ARGS+="$1";
+  *) ARGS+=" $1";
     ;;
   esac
   shift
@@ -37,5 +37,5 @@ if [ "1" = "${NHITS}" ] && [ "-E" = "${HIT}" ] && [ "" != "${ARGS}" ] && [ -e ${
 elif [ "3" = "${NHITS}" ] && [ "" != "${CAT}" ] && [ "" != "${WC}" ] && [ "2" = "$(${CAT} - | ${WC} -w)" ]; then
   echo "${MAJOR} ${MINOR}"
 else
-  eval "${YCC} ${ARGS}"
+  eval "${YCC} '-D__has_feature(A)=0' '-D__has_builtin(A)=0' ${ARGS}"
 fi
