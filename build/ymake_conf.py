@@ -1368,8 +1368,9 @@ class GnuCompiler(Compiler):
         self.debug_info_flags = ['-g']
         if self.target.is_linux:
             self.debug_info_flags.append('-ggnu-pubnames')
-        if self.tc.is_clang:
+        if is_positive('DEBUG_PREFIX_MAP') and self.tc.is_clang:
             self.c_foptions.append('-fdebug-prefix-map=${ARCADIA_ROOT}/=')
+            self.c_foptions.append('-fdebug-prefix-map=${ARCADIA_BUILD_ROOT}/=')
 
         self.cross_suffix = '' if is_positive('FORCE_NO_PIC') else '.pic'
 
@@ -1614,6 +1615,7 @@ class LD(Linker):
                 tc_root = tc.name_marker if target.is_i686 or (tc.is_clang and tc.version_at_least(5, 0)) else '{}/clang'.format(tc.name_marker)
                 prefix = select(no_default=True, selectors=[
                     (target.is_i686, 'i686-linux-android'),
+                    (target.is_x86_64, 'x86_64-linux-android'),
                     (target.is_armv7a, 'arm-linux-androideabi'),
                     (target.is_armv8a, 'aarch64-linux-android')
                 ])

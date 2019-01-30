@@ -28,6 +28,7 @@ from libcpp.map cimport map as cmap
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 
+from util.generic.array_ref cimport TArrayRef, TConstArrayRef
 from util.generic.hash cimport THashMap
 from util.generic.maybe cimport TMaybe
 from util.generic.ptr cimport THolder
@@ -63,32 +64,6 @@ cdef extern from "catboost/python-package/catboost/helpers.h":
     cdef void SetPythonInterruptHandler() nogil
     cdef void ResetPythonInterruptHandler() nogil
 
-
-# TODO(akhropov): Add necessary methods to util's def
-cdef extern from "util/generic/array_ref.h":
-    cdef cppclass TArrayRef[T]:
-        TArrayRef() except +
-        TArrayRef(T* data, size_t len) except +
-        TArrayRef(T* begin, T* end) except +
-
-        T& operator[](size_t)
-
-        T* data() except +
-        size_t size() except +
-        T* begin() except +
-        T* end() except +
-
-    cdef cppclass TConstArrayRef[T]:
-        TConstArrayRef() except +
-        TConstArrayRef(const T* data, size_t len) except +
-        TConstArrayRef(const T* begin, const T* end) except +
-
-        const T& operator[](size_t)
-
-        const T* data() except +
-        size_t size() except +
-        const T* begin() except +
-        const T* end() except +
 
 # TODO(akhropov): Add to util's def
 cdef extern from "util/generic/ptr.h" nogil:
@@ -167,6 +142,11 @@ cdef extern from "catboost/libs/options/enums.h":
     cdef EPredictionType EPredictionType_RawFormulaVal "EPredictionType::RawFormulaVal"
 
 
+cdef extern from "catboost/libs/quantization_schema/schema.h" namespace "NCB":
+    cdef cppclass TPoolQuantizationSchema:
+        pass
+
+
 cdef extern from "catboost/libs/data_new/features_layout.h" namespace "NCB":
     cdef cppclass TFeatureMetaInfo:
         EFeatureType Type
@@ -178,8 +158,9 @@ cdef extern from "catboost/libs/data_new/features_layout.h" namespace "NCB":
         TFeaturesLayout() except +ProcessException
         TFeaturesLayout(
             const ui32 featureCount,
-            TVector[ui32] catFeatureIndices,
-            const TVector[TString]& featureId
+            const TVector[ui32]& catFeatureIndices,
+            const TVector[TString]& featureId,
+            const TPoolQuantizationSchema* quantizationSchema
         )  except +ProcessException
 
         TConstArrayRef[TFeatureMetaInfo] GetExternalFeaturesMetaInfo() except +ProcessException
@@ -1332,8 +1313,8 @@ cdef TFeaturesLayout* _init_features_layout(data, cat_features, feature_names):
     return new TFeaturesLayout(
         <ui32>feature_count,
         cat_features_vector,
-        feature_names_vector
-    )
+        feature_names_vector,
+        <TPoolQuantizationSchema*>nullptr)
 
 cdef TVector[bool_t] _get_is_cat_feature_mask(const TFeaturesLayout* featuresLayout):
     cdef TVector[bool_t] mask
