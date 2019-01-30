@@ -12,6 +12,8 @@
 
 #if defined(__TBB_PARALLEL)
 # include <tbb/tbb.h>
+#elif !defined(__PARALLEL) && 1 // enabled
+# define __PARALLEL
 #endif
 
 using namespace NCB;
@@ -137,13 +139,17 @@ inline static void SetSingleIndex(
         }
     } else {
 #if defined(__TBB_PARALLEL)
-        parallel_for(docIndexRange.IterParallel(),
-        [=](const auto& subrange) {
+        parallel_for(docIndexRange.IterParallel(), [&](const auto& subrange) {
             for (auto doc = subrange.begin(); doc != subrange.end(); ++doc) {
                 const ui32 originalDocIdx = bucketIndexing[doc];
                 (*singleIdx)[doc] = indexer.GetIndex(indices[doc], bucketIndex[originalDocIdx]);
             }
         }, partitioner);
+#elif defined(__PARALLEL)
+        ParallelFor(docIndexRange.Begin, docIndexRange.End, [&](int doc) {
+            const ui32 originalDocIdx = bucketIndexing[doc];
+            (*singleIdx)[doc] = indexer.GetIndex(indices[doc], bucketIndex[originalDocIdx]);
+        });
 #else
         for (int doc : docIndexRange.Iter()) {
             const ui32 originalDocIdx = bucketIndexing[doc];
