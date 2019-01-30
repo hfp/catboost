@@ -146,7 +146,7 @@ inline static void SetSingleIndex(
             }
         }, partitioner);
 #elif defined(__PARALLEL)
-        ParallelFor(docIndexRange.Begin, docIndexRange.End, [&](int doc) {
+        NPar::ParallelFor(docIndexRange.Begin, docIndexRange.End, [&](int doc) {
             const ui32 originalDocIdx = bucketIndexing[doc];
             (*singleIdx)[doc] = indexer.GetIndex(indices[doc], bucketIndex[originalDocIdx]);
         });
