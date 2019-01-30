@@ -283,7 +283,7 @@ static TTriWayDotProduct<float> TriWayDotProductImpl(const float* lhs, const flo
     alignas(16) float res[4];
     _mm_store_ps(res, t0);
     TTriWayDotProduct<float> result{res[0], res[1], res[2]};
-    static constexpr const TTriWayDotProduct<float> def = { 0 };
+    static constexpr const TTriWayDotProduct<float> def;
     // fill skipped fields with default values
     if constexpr (!computeLL) {
         result.LL = def.LL;
