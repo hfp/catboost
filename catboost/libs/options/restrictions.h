@@ -43,6 +43,7 @@ constexpr bool IsSupportedCtrType(ETaskType taskType, ECtrType ctrType) {
             }
         }
     }
+    return false;
 }
 
 

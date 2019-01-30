@@ -108,15 +108,15 @@ private:
     const EHessianType HessianType;
 
     virtual double CalcDer(double /*approx*/, float /*target*/) const {
-        CB_ENSURE(false, "Not implemented");
+        CB_ENSURE(false, "Not implemented"); return 0;
     }
 
     virtual double CalcDer2(double /*approx*/, float /*target*/) const {
-        CB_ENSURE(false, "Not implemented");
+        CB_ENSURE(false, "Not implemented"); return 0;
     }
 
     virtual double CalcDer3(double /*approx*/, float /*target*/) const {
-        CB_ENSURE(false, "Not implemented");
+        CB_ENSURE(false, "Not implemented"); return 0;
     }
 
     template <int MaxDerivativeOrder, bool UseTDers, bool UseExpApprox, bool HasDelta>

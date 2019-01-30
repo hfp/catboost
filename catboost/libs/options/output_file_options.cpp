@@ -20,6 +20,7 @@ TString NCatboostOptions::GetModelExtensionFromType(const EModelType modelType) 
         case EModelType::Onnx:
             return "onnx";
     }
+    return "";
 }
 
 bool NCatboostOptions::TryGetModelTypeFromExtension(const TStringBuf modelExtension, EModelType& modelType) {
