@@ -60,7 +60,7 @@ namespace NMaybe {
         using TStorageBase<T>::TStorageBase;
 
         constexpr TCopyBase() = default;
-        constexpr TCopyBase(const TCopyBase& rhs): TStorageBase<T>() {
+        constexpr TCopyBase(const TCopyBase& rhs) {
             if (rhs.Defined_) {
                 new (std::addressof(this->Data_)) T(rhs.Data_);
                 this->Defined_ = true;
