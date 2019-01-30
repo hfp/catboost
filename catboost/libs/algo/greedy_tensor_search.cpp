@@ -72,6 +72,7 @@ static double CalcDerivativesStDevFromZero(const TFold& fold, const EBoostingTyp
         case EBoostingType::Plain:
             return CalcDerivativesStDevFromZeroPlainBoosting(fold);
     }
+    return 0;
 }
 
 static double CalcDerivativesStDevFromZeroMultiplier(int learnSampleCount, double modelLength) {

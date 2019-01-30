@@ -134,6 +134,7 @@ double NCatboostOptions::GetLqParam(const TLossDescription& lossFunctionConfig) 
     } else {
         CB_ENSURE(false, "For " << ELossFunction::Lq << " q parameter is mandatory");
     }
+    return 0;
 }
 
 double NCatboostOptions::GetQuerySoftMaxLambdaReg(const TLossDescription& lossFunctionConfig) {

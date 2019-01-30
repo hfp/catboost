@@ -16,5 +16,6 @@ namespace NCatboost {
                 err << "CreateCatboostModelExporter doesn't support " << format << ".";
                 CB_ENSURE(false, err);
         }
+        return 0;
     }
 }

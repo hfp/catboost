@@ -140,6 +140,7 @@ static double Penalty(double weight, double, EPenaltyType type) {
         default:
             Y_VERIFY(false);
     }
+    return 0;
 }
 
 template <typename TWeightType>

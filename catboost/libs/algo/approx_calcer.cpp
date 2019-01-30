@@ -474,6 +474,7 @@ static inline double GetDirectionSign(const THolder<IMetric>& metric) {
         case EMetricBestValue::Max: return -1.0;
         default: Y_VERIFY(false, "Unexpected metric best value");
     }
+    return 0;
 }
 
 static void CalcApproxDeltaSimple(

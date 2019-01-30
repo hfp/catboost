@@ -23,7 +23,7 @@ public:
     }
 
     static int CalcInternalDer2DataSize(int /*approxDimension*/) {
-        CB_ENSURE(false, "Not implemented");
+        CB_ENSURE(false, "Not implemented"); return 0;
     }
 };
 

@@ -592,7 +592,7 @@ namespace NYT {
                 }
 
                 Y_FAIL("unreachable");
-                ;
+                return false;
             }
 
             void ReadBinaryInt64(i64* result) {

@@ -97,4 +97,5 @@ ui64 ParseMemorySizeDescription(const TStringBuf description) {
         }
     }
     CB_ENSURE(false, "incomprehensible value ('used_ram_limit'): " << description);
+    return 0;
 }
