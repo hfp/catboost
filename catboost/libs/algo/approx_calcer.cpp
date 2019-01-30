@@ -528,8 +528,8 @@ static void CalcApproxDeltaSimple(
         directionSign = GetDirectionSign(lossFunction[0]);
     }
     const auto lossCalcerFunc = [&] (const TVector<TVector<double>>& approxDeltas) {
-        TConstArrayRef<TQueryInfo> bodyTailQueryInfo(fold.LearnQueriesInfo.begin(), bt.BodyQueryFinish);
-        TConstArrayRef<float> bodyTailTarget(fold.LearnTarget.begin(), bt.BodyFinish);
+        TConstArrayRef<TQueryInfo> bodyTailQueryInfo(&fold.LearnQueriesInfo[0], bt.BodyQueryFinish);
+        TConstArrayRef<float> bodyTailTarget(&fold.LearnTarget[0], bt.BodyFinish);
         const auto& additiveStats = EvalErrors(
             bt.Approx,
             approxDeltas,
