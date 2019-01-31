@@ -474,13 +474,13 @@ static void CalcStatsImpl(
     TVector<TFullIndexType> singleIdx;
     singleIdx.yresize(docCount);
 
-    const int statsCount = fold.GetBodyTailCount() * fold.GetApproxDimension() * splitStatsCount;
+    const int bodyTailCount = fold.GetBodyTailCount(), approxDimension = fold.GetApproxDimension();
+    const int statsCount = bodyTailCount * approxDimension * splitStatsCount;
     const int filledSplitStatsCount = indexer.CalcSize(depth);
 
     // bodyFunc must accept (bodyTailIdx, dim, bucketStatsArrayBegin) params
     auto forEachBodyTailAndApproxDimension = [&](auto bodyFunc) {
-        const int approxDimension = fold.GetApproxDimension();
-        for (int bodyTailIdx : xrange(fold.GetBodyTailCount())) {
+        for (int bodyTailIdx : xrange(bodyTailCount)) {
             for (int dim : xrange(approxDimension)) {
                 bodyFunc(bodyTailIdx, dim, (bodyTailIdx * approxDimension + dim) * splitStatsCount);
             }
