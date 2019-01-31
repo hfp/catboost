@@ -1,18 +1,16 @@
 #pragma once
 
-#include <util/system/types.h>
+#include <util/generic/bitops.h>
 
 #include <cmath>
 
 
 namespace NCB {
-
-    /* TODO(akhropov): replace with fast implementation,
-     *  some ideas: https://stackoverflow.com/questions/3272424/compute-fast-log-base-2-ceiling
-     *  util/generic/bitops/CeilLog2 won't work due to 'CeilLog2(1)=1'
-     */
-    inline ui32 IntLog2(ui32 values) {
-        return (ui32)ceil(log2(values));
+    inline ui32 IntLog2(ui32 value) {
+        const ui32 v0 = MostSignificantBit(value - 1), v1 = MostSignificantBit(value);
+        const ui32 result = (1 < value ? (v0 != v1 ? v1 : (v1 + 1)) : 0);
+        Y_ASSERT(result == (ui32)ceil(log2(value)));
+        return result;
     }
 
     // nan == nan is true here in contrast with the standard comparison operator
