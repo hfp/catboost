@@ -37,7 +37,12 @@ void CalcStatsAndScores(
     TVector<TScoreBin>* scoreBins // can be nullptr, if so - don't calc and return this data (used in dictributed mode now)
 );
 
-TVector<TScoreBin> GetScoreBins(
+#if defined(SCORE_BIN_TLS)
+const TVector<TScoreBin>&
+#else
+TVector<TScoreBin>
+#endif
+GetScoreBins(
     const TStats3D& stats,
     ESplitType splitType,
     int depth,

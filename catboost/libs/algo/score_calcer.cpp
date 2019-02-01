@@ -918,7 +918,12 @@ void CalcStatsAndScores(
     }
 }
 
-TVector<TScoreBin> GetScoreBins(
+#if defined(SCORE_BIN_TLS)
+const TVector<TScoreBin>&
+#else
+TVector<TScoreBin>
+#endif
+GetScoreBins(
     const TStats3D& stats,
     ESplitType splitType,
     int depth,
@@ -932,7 +937,13 @@ TVector<TScoreBin> GetScoreBins(
     const float l2Regularizer = static_cast<const float>(fitParams.ObliviousTreeOptions->L2Reg);
     const int leafCount = 1 << depth;
     const TStatsIndexer indexer(bucketCount);
+#if defined(SCORE_BIN_TLS)
+    Y_STATIC_THREAD(TVector<TScoreBin>) scoreBinLocal; // TVector is non-POD
+    TVector<TScoreBin>& scoreBin = TlsRef(scoreBinLocal);
+    scoreBin.resize(bucketCount);
+#else
     TVector<TScoreBin> scoreBin(bucketCount);
+#endif
     for (int statsIdx = 0; statsIdx * splitStatsCount < bucketStats.ysize(); ++statsIdx) {
         const TBucketStats* stats = GetDataPtr(bucketStats) + statsIdx * splitStatsCount;
         UpdateScoreBin(
