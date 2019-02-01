@@ -12,8 +12,12 @@
 
 #if defined(__TBB_PARALLEL)
 # include <tbb/tbb.h>
-#elif !defined(__PARALLEL) && 1 // enabled
+#elif !defined(__PARALLEL)
 # define __PARALLEL
+#endif
+#if !defined(SCORE_CALCER_TLS)
+# include <util/system/tls.h>
+# define SCORE_CALCER_TLS
 #endif
 
 using namespace NCB;
@@ -470,10 +474,13 @@ static void CalcStatsImpl(
     Y_ASSERT(!isCaching || depth > 0);
 
     const int docCount = fold.GetDocCount();
-
-    TVector<TFullIndexType> singleIdx;
+#if defined(SCORE_CALCER_TLS)
+    Y_STATIC_THREAD(TVector<TFullIndexType>) singleIdxLocal; // TVector is non-POD
+    TVector<TFullIndexType>& singleIdx = TlsRef(singleIdxLocal);
     singleIdx.yresize(docCount);
-
+#else
+    TVector<TFullIndexType> singleIdx(docCount);
+#endif
     const int bodyTailCount = fold.GetBodyTailCount(), approxDimension = fold.GetApproxDimension();
     const int statsCount = bodyTailCount * approxDimension * splitStatsCount;
     const int filledSplitStatsCount = indexer.CalcSize(depth);
