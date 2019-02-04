@@ -17,6 +17,10 @@
 #include <util/string/builder.h>
 #include <util/system/mem_info.h>
 
+#if !defined(GREEDY_TENSOR_SEARCH_TLS)
+# include <util/system/tls.h>
+# define GREEDY_TENSOR_SEARCH_TLS
+#endif
 
 using namespace NCB;
 
@@ -346,7 +350,12 @@ static void CalcBestScore(const TTrainingForCPUDataProviders& data,
                 const auto& proj = candidate.Candidates[oneCandidate].SplitCandidate.Ctr.Projection;
                 Y_ASSERT(!fold->GetCtrRef(proj).Feature.empty());
             }
+#if defined(GREEDY_TENSOR_SEARCH_TLS)
+            Y_STATIC_THREAD(TVector<TScoreBin>) scoreBinsLocal; // TVector is non-POD
+            TVector<TScoreBin>& scoreBins = TlsRef(scoreBinsLocal);
+#else
             TVector<TScoreBin> scoreBins;
+#endif
             CalcStatsAndScores(*data.Learn->ObjectsData,
                                fold->GetAllCtrs(),
                                ctx->SampledDocs,
