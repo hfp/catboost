@@ -743,7 +743,7 @@ void CalcStatsAndScores(
     const bool isPairwiseScoring = IsPairwiseScoring(fitParams.LossFunctionDescription->GetLossFunction());
     const bool isPlainMode = IsPlainMode(fitParams.BoostingOptions->BoostingType);
 
-    const float l2Regularizer = static_cast<const float>(fitParams.ObliviousTreeOptions->L2Reg);
+    const float l2Regularizer = static_cast<float>(fitParams.ObliviousTreeOptions->L2Reg);
 
     decltype(auto) selectCalcStatsImpl = [&] (
         auto isCaching,
@@ -811,7 +811,7 @@ void CalcStatsAndScores(
 
         if (scoreBins) {
             const float pairwiseBucketWeightPriorReg =
-                static_cast<const float>(fitParams.ObliviousTreeOptions->PairwiseNonDiagReg);
+                static_cast<float>(fitParams.ObliviousTreeOptions->PairwiseNonDiagReg);
             CalculatePairwiseScore(
                 *pairwiseStats,
                 bucketCount,
@@ -911,7 +911,7 @@ GetScoreBins(
     const TVector<TBucketStats>& bucketStats = stats.Stats;
     const int splitStatsCount = stats.BucketCount * stats.MaxLeafCount;
     const int bucketCount = stats.BucketCount;
-    const float l2Regularizer = static_cast<const float>(fitParams.ObliviousTreeOptions->L2Reg);
+    const float l2Regularizer = static_cast<float>(fitParams.ObliviousTreeOptions->L2Reg);
     const int leafCount = 1 << depth;
     const TStatsIndexer indexer(bucketCount);
 #if defined(SCORE_BIN_TLS)
