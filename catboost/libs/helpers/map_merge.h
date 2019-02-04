@@ -10,6 +10,11 @@
 #include <util/generic/utility.h>
 #include <util/generic/ymath.h>
 
+#if !defined(MAP_MERGE_TLS)
+# include <util/system/tls.h>
+# define MAP_MERGE_TLS
+#endif
+
 namespace NCB {
 
     /**
@@ -21,8 +26,7 @@ namespace NCB {
      * mapFunc(blockIndexRange, blockOutput) processes data in range
      *   blockIndexRange and saves data to blockOutput
      *   should be able to handle empty index range (return valid blockOutput in this case)
-     * mergeFunc(dst, addVector) adds addVector data to dst, it can modify addVector as it is no
-     *   longer used after this call
+     * mergeFunc(dst, addVector) adds addVector data to dst
      */
     template <class TOutput, class TMapFunc, class TMergeFunc>
     void MapMerge(
@@ -39,8 +43,13 @@ namespace NCB {
         } else if (blockCount == 1) {
             mapFunc(indexRangesGenerator.GetRange(0), output);
         } else {
+#if defined(MAP_MERGE_TLS)
+            Y_STATIC_THREAD(TVector<TOutput>) mapOutputsLocal; // TVector is non-POD
+            TVector<TOutput>& mapOutputs = TlsRef(mapOutputsLocal);
+            mapOutputs.yresize(blockCount - 1);
+#else
             TVector<TOutput> mapOutputs(blockCount - 1); // w/o first, first is reused from 'output' param
-
+#endif
             localExecutor->ExecRange(
                 [&](int blockId) {
                     mapFunc(
@@ -53,7 +62,7 @@ namespace NCB {
                 NPar::TLocalExecutor::WAIT_COMPLETE
             );
 
-            mergeFunc(output, std::move(mapOutputs));
+            mergeFunc(output, mapOutputs);
         }
     }
 

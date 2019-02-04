@@ -10,11 +10,6 @@
 
 #include <type_traits>
 
-#if defined(__TBB_PARALLEL)
-# include <tbb/tbb.h>
-#elif !defined(__PARALLEL)
-# define __PARALLEL
-#endif
 #if !defined(SCORE_CALCER_TLS)
 # include <util/system/tls.h>
 # define SCORE_CALCER_TLS
@@ -115,10 +110,6 @@ inline static void SetSingleIndex(
 ) {
     const int docCount = fold.GetDocCount();
     const TIndexType* indices = GetDataPtr(fold.Indices);
-#if defined(__TBB_PARALLEL)
-    using namespace tbb;
-    static affinity_partitioner partitioner;
-#endif
     if (bucketIndexing == nullptr) {
         for (int doc : docIndexRange.Iter()) {
             (*singleIdx)[doc] = indexer.GetIndex(indices[doc], bucketIndex[bucketBeginOffset + doc]);
@@ -142,24 +133,10 @@ inline static void SetSingleIndex(
             blockStart = nextBlockStart;
         }
     } else {
-#if defined(__TBB_PARALLEL)
-        parallel_for(docIndexRange.IterParallel(), [&](const auto& subrange) {
-            for (auto doc = subrange.begin(); doc != subrange.end(); ++doc) {
-                const ui32 originalDocIdx = bucketIndexing[doc];
-                (*singleIdx)[doc] = indexer.GetIndex(indices[doc], bucketIndex[originalDocIdx]);
-            }
-        }, partitioner);
-#elif defined(__PARALLEL)
-        NPar::ParallelFor(docIndexRange.Begin, docIndexRange.End, [&](int doc) {
-            const ui32 originalDocIdx = bucketIndexing[doc];
-            (*singleIdx)[doc] = indexer.GetIndex(indices[doc], bucketIndex[originalDocIdx]);
-        });
-#else
         for (int doc : docIndexRange.Iter()) {
             const ui32 originalDocIdx = bucketIndexing[doc];
             (*singleIdx)[doc] = indexer.GetIndex(indices[doc], bucketIndex[originalDocIdx]);
         }
-#endif
     }
 }
 
@@ -446,7 +423,7 @@ static void CalcStatsImpl(
                 );
             }
         },
-        /*mergeFunc*/[&](TPairwiseStats* output, TVector<TPairwiseStats>&& addVector) {
+        /*mergeFunc*/[&](TPairwiseStats* output, const TVector<TPairwiseStats>& addVector) {
             for (const auto& addItem : addVector) {
                 output->Add(addItem);
             }
@@ -533,7 +510,7 @@ static void CalcStatsImpl(
         },
         /*mergeFunc*/[&](
             TBucketStatsRefOptionalHolder* output,
-            TVector<TBucketStatsRefOptionalHolder>&& addVector
+            const TVector<TBucketStatsRefOptionalHolder>& addVector
         ) {
             forEachBodyTailAndApproxDimension(
                 [&](int /*bodyTailIdx*/, int /*dim*/, int bucketStatsArrayBegin) {
