@@ -20,7 +20,7 @@ Y_UNIT_TEST_SUITE(TMapMergeTest) {
             [&v](NCB::TIndexRange<int> range, int* res) {
                 *res = Accumulate(v.begin() + range.Begin, v.begin() + range.End, 0);
             },
-            [](int* res, TVector<int>&& mapOutputs) {
+            [](int* res, const TVector<int>& mapOutputs) {
                 *res += Accumulate(mapOutputs.begin(), mapOutputs.end(), 0);
             },
             &res
@@ -40,7 +40,7 @@ Y_UNIT_TEST_SUITE(TMapMergeTest) {
             [&v](NCB::TIndexRange<int> range, int* res) {
                 *res = Accumulate(v.begin() + range.Begin, v.begin() + range.End, 0);
             },
-            [](int* res, TVector<int>&& mapOutputs) {
+            [](int* res, const TVector<int>& mapOutputs) {
                 *res += Accumulate(mapOutputs.begin(), mapOutputs.end(), 0);
             },
             &res
@@ -64,7 +64,7 @@ Y_UNIT_TEST_SUITE(TMapMergeTest) {
                         *maxLen = Max(*maxLen, v[i].size());
                     }
                 },
-                [](size_t* maxLen, TVector<size_t>&& mapOutputs) {
+                [](size_t* maxLen, const TVector<size_t>& mapOutputs) {
                     for (auto len : mapOutputs) {
                         *maxLen = Max(*maxLen, len);
                     }
@@ -86,7 +86,7 @@ Y_UNIT_TEST_SUITE(TMapMergeTest) {
                         *maxLen = Max(*maxLen, v[i].size());
                     }
                 },
-                [](size_t* maxLen, TVector<size_t>&& mapOutputs) {
+                [](size_t* maxLen, const TVector<size_t>& mapOutputs) {
                     for (auto len : mapOutputs) {
                         *maxLen = Max(*maxLen, len);
                     }

@@ -79,7 +79,7 @@ TArray2D<double> ComputePairwiseWeightSums(
             }
         }
     };
-    const auto mergeSums = [&](TArray2D<double>* mergedSum, const TVector<TArray2D<double>>&& rangeSums) {
+    const auto mergeSums = [&](TArray2D<double>* mergedSum, const TVector<TArray2D<double>>& rangeSums) {
         for (const auto& rangeSum : rangeSums) {
             for (int winnerIdx = 0; winnerIdx < leafCount; ++winnerIdx) {
                 for (int loserIdx = 0; loserIdx < leafCount; ++loserIdx) {
