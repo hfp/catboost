@@ -3118,7 +3118,12 @@ def test_allow_writing_files_and_used_ram_limit(boosting_type, used_ram_limit, d
     return [local_canonical_file(output_eval_path)]
 
 
-def test_apply_with_permuted_columns():
+@pytest.mark.parametrize(
+    'ignored_features',
+    [True, False],
+    ids=['ignored_features=True', 'ignored_features=False']
+)
+def test_apply_with_permuted_columns(ignored_features):
     output_model_path = yatest.common.test_output_path('model.bin')
     output_eval_path = yatest.common.test_output_path('test.eval')
 
@@ -3136,6 +3141,9 @@ def test_apply_with_permuted_columns():
         '-m', output_model_path,
         '--eval-file', output_eval_path,
     )
+    if ignored_features:
+        cmd += ('--ignore-features', '0:2:5')
+
     yatest.common.execute(cmd)
 
     permuted_test_path, permuted_cd_path = permute_dataset_columns(
@@ -6010,3 +6018,47 @@ def test_train_on_quantized_pool_with_large_grid():
         '-i', '10')
 
     yatest.common.execute(cmd)
+
+
+def test_write_predictions_to_streams():
+    output_model_path = yatest.common.test_output_path('model.bin')
+    output_eval_path = yatest.common.test_output_path('test.eval')
+    calc_output_eval_path_redirected = yatest.common.test_output_path('calc_test.eval')
+
+    cmd = (
+        CATBOOST_PATH,
+        'fit',
+        '-f', data_file('adult', 'train_small'),
+        '-t', data_file('adult', 'test_small'),
+        '--eval-file', output_eval_path,
+        '--column-description', data_file('adult', 'train.cd'),
+        '-i', '10',
+        '-m', output_model_path
+    )
+    yatest.common.execute(cmd)
+
+    calc_cmd = (
+        CATBOOST_PATH,
+        'calc',
+        '--input-path', data_file('adult', 'test_small'),
+        '--column-description', data_file('adult', 'train.cd'),
+        '-m', output_model_path,
+        '--output-path', 'stream://stdout',
+    )
+    with open(calc_output_eval_path_redirected, 'w') as catboost_stdout:
+        yatest.common.execute(calc_cmd, stdout=catboost_stdout)
+
+    assert compare_evals(output_eval_path, calc_output_eval_path_redirected)
+
+    calc_cmd = (
+        CATBOOST_PATH,
+        'calc',
+        '--input-path', data_file('adult', 'test_small'),
+        '--column-description', data_file('adult', 'train.cd'),
+        '-m', output_model_path,
+        '--output-path', 'stream://stderr'
+    )
+    with open(calc_output_eval_path_redirected, 'w') as catboost_stderr:
+        yatest.common.execute(calc_cmd, stderr=catboost_stderr)
+
+    assert compare_evals(output_eval_path, calc_output_eval_path_redirected)
