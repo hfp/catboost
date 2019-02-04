@@ -10,17 +10,14 @@
  */
 template <typename T, typename TRng>
 static inline T StdNormalDistribution(TRng&& rng) noexcept {
-    T x;
-    T y;
-    T r;
+    T x, r;
 
     do {
-        x = (T)rng.GenRandReal1() * T(2) - T(1);
-        y = (T)rng.GenRandReal1() * T(2) - T(1);
-        r = x * x + y * y;
-    } while (r > T(1) || r <= T(0));
+        x = static_cast<T>(rng.GenRandReal1()) * T(2) - T(1);
+        r = x * x;
+    } while (T(0.5) < r || T(0) == x);
 
-    return x * std::sqrt(-T(2) * std::log(r) / r);
+    return x * std::sqrt(std::abs(std::log(T(2) * r) / r));
 }
 
 template <typename T, typename TRng>
