@@ -8,7 +8,8 @@ export YA_CACHE_DIR=${HOME}/catboost-cache
 mkdir -p ${YA_CACHE_DIR}
 
 cd ${BUILD_DIR}
-unset CC CXX
+export CC=gcc
+unset CXX
 ${HERE}/ya make -r -k -DHAVE_CUDA=no \
   --target-platform-c-compiler=gcc --target-platform-cxx-compiler=g++ \
   --c-compiler=gcc --cxx-compiler=g++ #-v
