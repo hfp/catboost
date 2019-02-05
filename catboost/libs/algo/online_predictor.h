@@ -94,7 +94,7 @@ inline double CalcAverage(double sumDelta,
                           float l2Regularizer,
                           double sumAllWeights,
                           int allDocCount) {
-    double inv = count > 0 ? 1. / (count + l2Regularizer * (sumAllWeights / allDocCount)) : 0;
+    const double inv = 0 < count ? (allDocCount / (count * allDocCount + l2Regularizer * sumAllWeights)) : 0;
     return sumDelta * inv;
 }
 
