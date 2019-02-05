@@ -353,6 +353,7 @@ static void CalcBestScore(const TTrainingForCPUDataProviders& data,
 #if defined(GREEDY_TENSOR_SEARCH_TLS)
             Y_STATIC_THREAD(TVector<TScoreBin>) scoreBinsLocal; // TVector is non-POD
             TVector<TScoreBin>& scoreBins = TlsRef(scoreBinsLocal);
+            scoreBins.clear();
 #else
             TVector<TScoreBin> scoreBins;
 #endif
