@@ -10,7 +10,7 @@
  */
 template <typename T, typename TRng>
 static inline T StdNormalDistribution(TRng&& rng) noexcept {
-    T x, r;
+    T x;
 
     do {
         x = static_cast<T>(rng.GenRandReal1()) * T(2) - T(1);
