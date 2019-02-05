@@ -17,7 +17,7 @@ static inline T StdNormalDistribution(TRng&& rng) noexcept {
         r = x * x;
     } while (T(0.5) < r || T(0) == x);
 
-    return x * std::sqrt(std::abs(std::log(T(2) * r) / r));
+    return std::sqrt(std::abs(T(M_LN2) + log(r)));
 }
 
 template <typename T, typename TRng>
