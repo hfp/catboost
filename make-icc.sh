@@ -9,7 +9,7 @@ WHEEL_DIR=${BUILD_DIR}/..
 
 YCXX=icpc
 YCC=icc
-YARGS="-r -DHAVE_CUDA=no --c-compiler=${YCC} --cxx-compiler=${YCXX} #-v"
+YARGS="-r -DHAVE_CUDA=no --c-compiler=${YCC} --cxx-compiler=${YCXX}"
 
 unset CXX
 export CC=${YCC}
