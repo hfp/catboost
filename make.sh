@@ -4,13 +4,16 @@ HERE=$(cd $(dirname $0); pwd -P)
 BUILD_DIR=${HERE}/catboost/python-package/catboost
 WHEEL_DIR=${BUILD_DIR}/..
 
-export YA_CACHE_DIR=${HOME}/catboost-cache
+YARGS="-r -DHAVE_CUDA=no #-v"
+
+unset CXX
+unset CC
+export PYTHONPATH=$PYTHONPATH:${WHEEL_DIR}
+export YA_CACHE_DIR=/tmp/catboost-cache
 mkdir -p ${YA_CACHE_DIR}
 
 cd ${BUILD_DIR}
-unset CC CXX
-${HERE}/ya make -r -k -DHAVE_CUDA=no #-v
+${HERE}/ya make ${YARGS}
 
 cd ${WHEEL_DIR}
-export PYTHONPATH=$PYTHONPATH:${WHEEL_DIR}
-python mk_wheel.py -r
+python mk_wheel.py ${YARGS}
