@@ -3703,6 +3703,8 @@ TMetricHolder THuberLossMetric::EvalSingleThread(
     Y_ASSERT(target.size() == approxVals.size());
 
     TMetricHolder error(2);
+    double& errorStat0 = error.Stats[0];
+    double& errorStat1 = error.Stats[1];
 
     bool hasWeight = !weight.empty();
 
@@ -3710,11 +3712,11 @@ TMetricHolder THuberLossMetric::EvalSingleThread(
         double targetMismatch = fabs(approxVals[k] - target[k]);
         const float w = hasWeight ? weight[k] : 1;
         if (targetMismatch < Delta) {
-            error.Stats[0] += 0.5 * Sqr(targetMismatch) * w;
+            errorStat0 += 0.5 * Sqr(targetMismatch) * w;
         } else {
-            error.Stats[0] += Delta * (targetMismatch - 0.5 * Delta) * w;
+            errorStat0 += Delta * (targetMismatch - 0.5 * Delta) * w;
         }
-        error.Stats[1] += w;
+        errorStat1 += w;
     }
     return error;
 }
