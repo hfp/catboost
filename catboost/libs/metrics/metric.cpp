@@ -192,6 +192,8 @@ TMetricHolder TCrossEntropyMetric::EvalSingleThread(
     CB_ENSURE(approx.size() == 1, "Metric logloss supports only single-dimensional data");
     const auto impl = [=] (auto isExpApprox, auto hasDelta, auto hasWeight, auto isLogloss, float border, TConstArrayRef<double> approx, TConstArrayRef<double> approxDelta) {
         TMetricHolder holder(2);
+        double& holderStat0 = holder.Stats[0];
+        double& holderStat1 = holder.Stats[1];
         for (int i : xrange(begin, end)) {
             const float w = hasWeight ? weight[i] : 1;
             const float prob = isLogloss ? target[i] > border : target[i];
@@ -202,16 +204,16 @@ TMetricHolder TCrossEntropyMetric::EvalSingleThread(
                     expApprox *= approxDelta[i];
                     nonExpApprox += FastLogf(approxDelta[i]);
                 }
-                holder.Stats[0] += w * ((1 - prob) * nonExpApprox + FastLogf(1 + 1 / expApprox));
+                holderStat0 += w * ((1 - prob) * nonExpApprox + FastLogf(1 + 1 / expApprox));
             } else {
                 double nonExpApprox = approx[i];
                 if (hasDelta) {
                     nonExpApprox += approxDelta[i];
                 }
                 const double expApprox = exp(nonExpApprox);
-                holder.Stats[0] += w * ((1 - prob) * nonExpApprox + log(1 + 1 / expApprox));
+                holderStat0 += w * ((1 - prob) * nonExpApprox + log(1 + 1 / expApprox));
             }
-            holder.Stats[1] += w;
+            holderStat1 += w;
         }
         return holder;
     };
@@ -310,15 +312,17 @@ TMetricHolder TCtrFactorMetric::EvalSingleThread(
     Y_ASSERT(approxVec.size() == target.size());
 
     TMetricHolder holder(2);
+    double& holderStat0 = holder.Stats[0];
+    double& holderStat1 = holder.Stats[1];
     const double* approxPtr = approxVec.data();
     const float* targetPtr = target.data();
     for (int i = begin; i < end; ++i) {
         float w = weight.empty() ? 1 : weight[i];
         const float targetVal = targetPtr[i] > Border;
-        holder.Stats[0] += w * targetVal;
+        holderStat0 += w * targetVal;
 
         const double p = OverflowSafeLogitProb(approxPtr[i]);
-        holder.Stats[1] += w * p;
+        holderStat1 += w * p;
     }
     return holder;
 }
@@ -371,14 +375,16 @@ TMetricHolder TRMSEMetric::EvalSingleThread(
 
     const auto impl = [=] (auto hasDelta, auto hasWeight, TConstArrayRef<double> approx, TConstArrayRef<double> approxDelta) {
         TMetricHolder error(2);
+        double& errorStat0 = error.Stats[0];
+        double& errorStat1 = error.Stats[1];
         for (int k : xrange(begin, end)) {
             double targetMismatch = approx[k] - target[k];
             if (hasDelta) {
                 targetMismatch += approxDelta[k];
             }
             const float w = hasWeight ? weight[k] : 1;
-            error.Stats[0] += Sqr(targetMismatch) * w;
-            error.Stats[1] += w;
+            errorStat0 += Sqr(targetMismatch) * w;
+            errorStat1 += w;
         }
         return error;
     };
@@ -453,14 +459,16 @@ TMetricHolder TLqMetric::EvalSingleThread(
     Y_ASSERT(!isExpApprox);
     const auto impl = [=] (auto hasDelta, auto hasWeight, TConstArrayRef<double> approx, TConstArrayRef<double> approxDelta) {
         TMetricHolder error(2);
+        double& errorStat0 = error.Stats[0];
+        double& errorStat1 = error.Stats[1];
         for (int k : xrange(begin, end)) {
             double targetMismatch = approx[k] - target[k];
             if (hasDelta) {
                 targetMismatch += approxDelta[k];
             }
             const float w = hasWeight ? weight[k] : 1;
-            error.Stats[0] += std::pow(Abs(targetMismatch), Q) * w;
-            error.Stats[1] += w;
+            errorStat0 += std::pow(Abs(targetMismatch), Q) * w;
+            errorStat1 += w;
         }
         return error;
     };
@@ -540,6 +548,8 @@ TMetricHolder TQuantileMetric::EvalSingleThread(
     Y_ASSERT(!isExpApprox);
     const auto impl = [=] (auto hasDelta, auto hasWeight, double alpha, bool isMAE, TConstArrayRef<double> approx, TConstArrayRef<double> approxDelta) {
         TMetricHolder error(2);
+        double& errorStat0 = error.Stats[0];
+        double& errorStat1 = error.Stats[1];
         for (int i : xrange(begin, end)) {
             double val = target[i] - approx[i];
             if (hasDelta) {
@@ -547,11 +557,11 @@ TMetricHolder TQuantileMetric::EvalSingleThread(
             }
             const double multiplier = (val > 0) ? alpha : -(1 - alpha);
             const float w = hasWeight ? weight[i] : 1;
-            error.Stats[0] += (multiplier * val) * w;
-            error.Stats[1] += w;
+            errorStat0 += (multiplier * val) * w;
+            errorStat1 += w;
         }
         if (isMAE) {
-            error.Stats[0] *= 2;
+            errorStat0 *= 2;
         }
         return error;
     };
@@ -629,6 +639,8 @@ TMetricHolder TLogLinQuantileMetric::EvalSingleThread(
     CB_ENSURE(approx.size() == 1, "Metric log-linear quantile supports only single-dimensional data");
     const auto impl = [=] (auto isExpApprox, auto hasDelta, auto hasWeight, double alpha, TConstArrayRef<double> approx, TConstArrayRef<double> approxDelta) {
         TMetricHolder error(2);
+        double& errorStat0 = error.Stats[0];
+        double& errorStat1 = error.Stats[1];
         for (int i : xrange(begin, end)) {
             double expApprox = approx[i];
             if (isExpApprox) {
@@ -644,8 +656,8 @@ TMetricHolder TLogLinQuantileMetric::EvalSingleThread(
             const double val = target[i] - expApprox;
             const double multiplier = (val > 0) ? alpha : -(1 - alpha);
             const float w = hasWeight ? weight[i] : 1;
-            error.Stats[0] += (multiplier * val) * w;
-            error.Stats[1] += w;
+            errorStat0 += (multiplier * val) * w;
+            errorStat1 += w;
         }
         return error;
     };
@@ -717,11 +729,13 @@ TMetricHolder TMAPEMetric::EvalSingleThread(
     Y_ASSERT(!isExpApprox);
     const auto impl = [=] (auto hasDelta, auto hasWeight, TConstArrayRef<double> approx, TConstArrayRef<double> approxDelta) {
         TMetricHolder error(2);
+        double& errorStat0 = error.Stats[0];
+        double& errorStat1 = error.Stats[1];
         for (int k : xrange(begin, end)) {
             const float w = hasWeight ? weight[k] : 1;
             const double delta = hasDelta ? approxDelta[k] : 0;
-            error.Stats[0] += Abs(1 - (approx[k] + delta) / target[k]) * w;
-            error.Stats[1] += w;
+            errorStat0 += Abs(1 - (approx[k] + delta) / target[k]) * w;
+            errorStat1 += w;
         }
         return error;
     };
@@ -796,10 +810,12 @@ TMetricHolder TNumErrorsMetric::EvalSingleThread(
     Y_ASSERT(approxVec.size() == target.size());
 
     TMetricHolder error(2);
+    double& errorStat0 = error.Stats[0];
+    double& errorStat1 = error.Stats[1];
     for (int k = begin; k < end; ++k) {
         float w = weight.empty() ? 1 : weight[k];
-        error.Stats[0] += (Abs(approxVec[k] - target[k]) > GreaterThan ? 1 : 0) * w;
-        error.Stats[1] += w;
+        errorStat0 += (Abs(approxVec[k] - target[k]) > GreaterThan ? 1 : 0) * w;
+        errorStat1 += w;
     }
 
     return error;
@@ -854,6 +870,8 @@ TMetricHolder TPoissonMetric::EvalSingleThread(
     Y_ASSERT(approx.size() == 1);
     const auto impl = [=] (auto isExpApprox, auto hasDelta, auto hasWeight, TConstArrayRef<double> approx, TConstArrayRef<double> approxDelta) {
         TMetricHolder error(2);
+        double& errorStat0 = error.Stats[0];
+        double& errorStat1 = error.Stats[1];
         for (int i : xrange(begin, end)) {
             double expApprox = approx[i], nonExpApprox;
             if (isExpApprox) {
@@ -869,8 +887,8 @@ TMetricHolder TPoissonMetric::EvalSingleThread(
                 FastExpInplace(&expApprox, 1);
             }
             const float w = hasWeight ? weight[i] : 1;
-            error.Stats[0] += (expApprox - target[i] * nonExpApprox) * w;
-            error.Stats[1] += w;
+            errorStat0 += (expApprox - target[i] * nonExpApprox) * w;
+            errorStat1 += w;
         }
         return error;
     };
@@ -945,10 +963,12 @@ TMetricHolder TMSLEMetric::EvalSingleThread(
     Y_ASSERT(!isExpApprox);
 
     TMetricHolder error(2);
+    double& errorStat0 = error.Stats[0];
+    double& errorStat1 = error.Stats[1];
     for (int i = begin; i < end; ++i) {
         float w = weight.empty() ? 1 : weight[i];
-        error.Stats[0] += Sqr(log(1 + approxVec[i]) - log(1 + target[i])) * w;
-        error.Stats[1] += w;
+        errorStat0 += Sqr(log(1 + approxVec[i]) - log(1 + target[i])) * w;
+        errorStat1 += w;
     }
 
     return error;
@@ -1091,11 +1111,13 @@ TMetricHolder TSMAPEMetric::EvalSingleThread(
     Y_ASSERT(!isExpApprox);
 
     TMetricHolder error(2);
+    double& errorStat0 = error.Stats[0];
+    double& errorStat1 = error.Stats[1];
     for (int i = begin; i < end; ++i) {
         float w = weight.empty() ? 1 : weight[i];
         double denominator = (fabs(approxVec[i]) + fabs(target[i]));
-        error.Stats[0] += denominator == 0 ? 0 : 200 * w * fabs(target[i] - approxVec[i]) / denominator;
-        error.Stats[1] += w;
+        errorStat0 += denominator == 0 ? 0 : 200 * w * fabs(target[i] - approxVec[i]) / denominator;
+        errorStat1 += w;
     }
 
     return error;
@@ -1221,6 +1243,8 @@ TMetricHolder TMultiClassMetric::EvalSingleThread(
     Y_ASSERT(!isExpApprox);
 
     TMetricHolder error(2);
+    double& errorStat0 = error.Stats[0];
+    double& errorStat1 = error.Stats[1];
 
     TVector<double> evaluatedApprox(approxDimension);
     for (int k = begin; k < end; ++k) {
@@ -1243,8 +1267,8 @@ TMetricHolder TMultiClassMetric::EvalSingleThread(
         const double targetClassApprox = evaluatedApprox[targetClass];
 
         const float w = weight.empty() ? 1 : weight[k];
-        error.Stats[0] += (targetClassApprox - maxApprox - log(sumExpApprox)) * w;
-        error.Stats[1] += w;
+        errorStat0 += (targetClassApprox - maxApprox - log(sumExpApprox)) * w;
+        errorStat1 += w;
     }
 
     return error;
@@ -1295,6 +1319,8 @@ TMetricHolder TMultiClassOneVsAllMetric::EvalSingleThread(
     Y_ASSERT(!isExpApprox);
 
     TMetricHolder error(2);
+    double& errorStat0 = error.Stats[0];
+    double& errorStat1 = error.Stats[1];
     TVector<double> evaluatedApprox(approxDimension);
     for (int k = begin; k < end; ++k) {
         GetMultiDimensionalApprox(k, approx, approxDelta, evaluatedApprox);
@@ -1309,8 +1335,8 @@ TMetricHolder TMultiClassOneVsAllMetric::EvalSingleThread(
         sumDimErrors += evaluatedApprox[targetClass];
 
         const float w = weight.empty() ? 1 : weight[k];
-        error.Stats[0] += sumDimErrors / approxDimension * w;
-        error.Stats[1] += w;
+        errorStat0 += sumDimErrors / approxDimension * w;
+        errorStat1 += w;
     }
     return error;
 }
@@ -1361,6 +1387,8 @@ TMetricHolder TPairLogitMetric::EvalSingleThread(
 
     const auto impl = [=] (auto isExpApprox, auto hasDelta, auto hasWeight, TConstArrayRef<double> approx, TConstArrayRef<double> approxDelta) {
         TMetricHolder error(2);
+        double& errorStat0 = error.Stats[0];
+        double& errorStat1 = error.Stats[1];
         TVector<double> approxExpShifted;
         for (int queryIndex : xrange(queryStartIndex, queryEndIndex)) {
             const int begin = queriesInfo[queryIndex].Begin;
@@ -1391,8 +1419,8 @@ TMetricHolder TPairLogitMetric::EvalSingleThread(
             for (int docId = 0; docId < queriesInfo[queryIndex].Competitors.ysize(); ++docId) {
                 for (const auto& competitor : queriesInfo[queryIndex].Competitors[docId]) {
                     const double weight = hasWeight ? competitor.Weight : 1.0;
-                    error.Stats[0] += -weight * log(approxExpShifted[docId] / (approxExpShifted[docId] + approxExpShifted[competitor.Id]));
-                    error.Stats[1] += weight;
+                    errorStat0 += -weight * log(approxExpShifted[docId] / (approxExpShifted[docId] + approxExpShifted[competitor.Id]));
+                    errorStat1 += weight;
                 }
             }
         }
@@ -1482,6 +1510,8 @@ TMetricHolder TQueryRMSEMetric::EvalSingleThread(
     Y_ASSERT(!isExpApprox);
     const auto impl = [=] (auto hasDelta, auto hasWeight, TConstArrayRef<double> approx, TConstArrayRef<double> approxDelta) {
         TMetricHolder error(2);
+        double& errorStat0 = error.Stats[0];
+        double& errorStat1 = error.Stats[1];
         for (int queryIndex : xrange(queryStartIndex, queryEndIndex)) {
             const int begin = queriesInfo[queryIndex].Begin;
             const int end = queriesInfo[queryIndex].End;
@@ -1489,8 +1519,8 @@ TMetricHolder TQueryRMSEMetric::EvalSingleThread(
             for (int docId : xrange(begin, end)) {
                 const double w = hasWeight ? weight[docId] : 1;
                 const double delta = hasDelta ? approxDelta[docId] : 0;
-                error.Stats[0] += Sqr(target[docId] - approx[docId] - delta - queryAvrg) * w;
-                error.Stats[1] += w;
+                errorStat0 += Sqr(target[docId] - approx[docId] - delta - queryAvrg) * w;
+                errorStat1 += w;
             }
         }
         return error;
@@ -1694,6 +1724,8 @@ TMetricHolder TNdcgMetric::EvalSingleThread(
     Y_ASSERT(approxDelta.empty());
     Y_ASSERT(!isExpApprox);
     TMetricHolder error(2);
+    double& errorStat0 = error.Stats[0];
+    double& errorStat1 = error.Stats[1];
     TVector<NMetrics::TSample> samples;
     for (int queryIndex = queryStartIndex; queryIndex < queryEndIndex; ++queryIndex) {
         const auto queryBegin = queriesInfo[queryIndex].Begin;
@@ -1704,8 +1736,8 @@ TMetricHolder TNdcgMetric::EvalSingleThread(
             MakeArrayRef(target.data() + queryBegin, querySize),
             MakeArrayRef(approx.front().data() + queryBegin, querySize),
             &samples);
-        error.Stats[0] += queryWeight * CalcNdcg(samples, MetricType, TopSize);
-        error.Stats[1] += queryWeight;
+        errorStat0 += queryWeight * CalcNdcg(samples, MetricType, TopSize);
+        errorStat1 += queryWeight;
     }
     return error;
 }
@@ -1814,10 +1846,12 @@ TMetricHolder TQuerySoftMaxMetric::EvalSingleQuery(
             }
         }
         TMetricHolder error(2);
+        double& errorStat0 = error.Stats[0];
+        double& errorStat1 = error.Stats[1];
         if (sumWeightedTargets <= 0) {
             return error;
         }
-        error.Stats[1] = sumWeightedTargets;
+        errorStat1 = sumWeightedTargets;
 
         for (int dim : xrange(count)) {
             const double delta = hasDelta ? approxDelta[start + dim] : 0;
@@ -1845,7 +1879,7 @@ TMetricHolder TQuerySoftMaxMetric::EvalSingleQuery(
             if (targets[start + dim] > 0) {
                 const double weight = hasWeight ? weights[start + dim] : 1;
                 if (weight > 0) {
-                    error.Stats[0] -= weight * targets[start + dim] * log(softmax[dim] / sumExpApprox);
+                    errorStat0 -= weight * targets[start + dim] * log(softmax[dim] / sumExpApprox);
                 }
             }
         }
@@ -1919,11 +1953,13 @@ TMetricHolder TR2Metric::EvalSingleThread(
     avrgTarget /= end - begin;
 
     TMetricHolder error(2);  // Stats[0] == mse, Stats[1] == targetVariance
+    double& errorStat0 = error.Stats[0];
+    double& errorStat1 = error.Stats[1];
 
     for (int k = begin; k < end; ++k) {
         float w = weight.empty() ? 1 : weight[k];
-        error.Stats[0] += Sqr(approxVec[k] - target[k]) * w;
-        error.Stats[1] += Sqr(target[k] - avrgTarget) * w;
+        errorStat0 += Sqr(approxVec[k] - target[k]) * w;
+        errorStat1 += Sqr(target[k] - avrgTarget) * w;
     }
     return error;
 }
@@ -2802,10 +2838,11 @@ double TMCCMetric::GetFinalError(const TMetricHolder& error) const {
     TVector<double> columnSum(ClassesCount, 0);
     double totalSum = 0;
     for (int approxClass = 0; approxClass < ClassesCount; ++approxClass) {
-        for (int tragetClass = 0; tragetClass < ClassesCount; ++tragetClass) {
-            rowSum[approxClass] += GetConstValue(error.Stats, approxClass, tragetClass);
-            columnSum[tragetClass] += GetConstValue(error.Stats, approxClass, tragetClass);
-            totalSum += GetConstValue(error.Stats, approxClass, tragetClass);
+        double& rowSumApproxClass = rowSum[approxClass];
+        for (int targetClass = 0; targetClass < ClassesCount; ++targetClass) {
+            columnSum[targetClass] += GetConstValue(error.Stats, approxClass, targetClass);
+            rowSumApproxClass += GetConstValue(error.Stats, approxClass, targetClass);
+            totalSum += GetConstValue(error.Stats, approxClass, targetClass);
         }
     }
 
@@ -3053,6 +3090,8 @@ TMetricHolder THammingLossMetric::EvalSingleThread(
     Y_ASSERT(!isExpApprox);
     Y_ASSERT(target.size() == approx[0].size());
     TMetricHolder error(2);
+    double& errorStat0 = error.Stats[0];
+    double& errorStat1 = error.Stats[1];
     const bool isMulticlass = approx.size() > 1;
 
     for (int i = begin; i < end; ++i) {
@@ -3061,8 +3100,8 @@ TMetricHolder THammingLossMetric::EvalSingleThread(
         int targetClass = static_cast<int>(targetVal);
 
         float w = weight.empty() ? 1 : weight[i];
-        error.Stats[0] += approxClass != targetClass ? w : 0.0;
-        error.Stats[1] += w;
+        errorStat0 += approxClass != targetClass ? w : 0.0;
+        errorStat1 += w;
     }
 
     return error;
@@ -3133,15 +3172,17 @@ TMetricHolder TPairAccuracyMetric::EvalSingleThread(
     CB_ENSURE(approx.size() == 1, "Metric PairLogit supports only single-dimensional data");
 
     TMetricHolder error(2);
+    double& errorStat0 = error.Stats[0];
+    double& errorStat1 = error.Stats[1];
     for (int queryIndex = queryStartIndex; queryIndex < queryEndIndex; ++queryIndex) {
         int begin = queriesInfo[queryIndex].Begin;
         for (int docId = 0; docId < queriesInfo[queryIndex].Competitors.ysize(); ++docId) {
             for (const auto& competitor : queriesInfo[queryIndex].Competitors[docId]) {
                 const auto competitorWeight = UseWeights ? competitor.Weight : 1.0;
                 if (approx[0][begin + docId] > approx[0][begin + competitor.Id]) {
-                    error.Stats[0] += competitorWeight;
+                    errorStat0 += competitorWeight;
                 }
-                error.Stats[1] += competitorWeight;
+                errorStat1 += competitorWeight;
             }
         }
     }
@@ -3208,6 +3249,8 @@ TMetricHolder TPrecisionAtKMetric::EvalSingleThread(
     Y_ASSERT(approxDelta.empty());
     Y_ASSERT(!isExpApprox);
     TMetricHolder error(2);
+    double& errorStat0 = error.Stats[0];
+    double& errorStat1 = error.Stats[1];
     for (int queryIndex = queryStartIndex; queryIndex < queryEndIndex; ++queryIndex) {
         int queryBegin = queriesInfo[queryIndex].Begin;
         int queryEnd = queriesInfo[queryIndex].End;
@@ -3215,8 +3258,8 @@ TMetricHolder TPrecisionAtKMetric::EvalSingleThread(
         TVector<double> approxCopy(approx[0].data() + queryBegin, approx[0].data() + queryEnd);
         TVector<float> targetCopy(target.begin() + queryBegin, target.begin() + queryEnd);
 
-        error.Stats[0] += CalcPrecisionAtK(approxCopy, targetCopy, TopSize, Border);
-        error.Stats[1]++;
+        errorStat0 += CalcPrecisionAtK(approxCopy, targetCopy, TopSize, Border);
+        errorStat1++;
     }
     return error;
 }
@@ -3287,6 +3330,8 @@ TMetricHolder TRecallAtKMetric::EvalSingleThread(
     Y_ASSERT(approxDelta.empty());
     Y_ASSERT(!isExpApprox);
     TMetricHolder error(2);
+    double& errorStat0 = error.Stats[0];
+    double& errorStat1 = error.Stats[1];
     for (int queryIndex = queryStartIndex; queryIndex < queryEndIndex; ++queryIndex) {
         int queryBegin = queriesInfo[queryIndex].Begin;
         int queryEnd = queriesInfo[queryIndex].End;
@@ -3294,8 +3339,8 @@ TMetricHolder TRecallAtKMetric::EvalSingleThread(
         TVector<double> approxCopy(approx[0].data() + queryBegin, approx[0].data() + queryEnd);
         TVector<float> targetCopy(target.begin() + queryBegin, target.begin() + queryEnd);
 
-        error.Stats[0] += CalcRecallAtK(approxCopy, targetCopy, TopSize, Border);
-        error.Stats[1]++;
+        errorStat0 += CalcRecallAtK(approxCopy, targetCopy, TopSize, Border);
+        errorStat1++;
     }
     return error;
 }
@@ -3366,6 +3411,8 @@ TMetricHolder TMAPKMetric::EvalSingleThread(
     Y_ASSERT(approxDelta.empty());
     Y_ASSERT(!isExpApprox);
     TMetricHolder error(2);
+    double& errorStat0 = error.Stats[0];
+    double& errorStat1 = error.Stats[1];
 
     for (int queryIndex = queryStartIndex; queryIndex < queryEndIndex; ++queryIndex) {
         int queryBegin = queriesInfo[queryIndex].Begin;
@@ -3374,8 +3421,8 @@ TMetricHolder TMAPKMetric::EvalSingleThread(
         TVector<double> approxCopy(approx[0].data() + queryBegin, approx[0].data() + queryEnd);
         TVector<float> targetCopy(target.data() + queryBegin, target.data() + queryEnd);
 
-        error.Stats[0] += CalcAveragePrecisionK(approxCopy, targetCopy, TopSize, Border);
-        error.Stats[1]++;
+        errorStat0 += CalcAveragePrecisionK(approxCopy, targetCopy, TopSize, Border);
+        errorStat1++;
     }
     return error;
 }
@@ -3694,6 +3741,8 @@ TMetricHolder TAverageGain::EvalSingleThread(
     CB_ENSURE(approx.size() == 1, "Metric AverageGain supports only single-dimensional data");
 
     TMetricHolder error(2);
+    double& errorStat0 = error.Stats[0];
+    double& errorStat1 = error.Stats[1];
 
     TVector<std::pair<double, ui32>> approxWithDoc;
     for (int queryIndex = queryStartIndex; queryIndex < queryEndIndex; ++queryIndex) {
@@ -3707,7 +3756,7 @@ TMetricHolder TAverageGain::EvalSingleThread(
             for (ui32 docId = startIdx; docId < endIdx; ++docId) {
                 targetSum += target[docId];
             }
-            error.Stats[0] += queryWeight * (targetSum / querySize);
+            errorStat0 += queryWeight * (targetSum / querySize);
         } else {
             approxWithDoc.yresize(querySize);
             for (ui32 i = 0; i < querySize; ++i) {
@@ -3722,9 +3771,9 @@ TMetricHolder TAverageGain::EvalSingleThread(
             for (int i = 0; i < TopSize; ++i) {
                 targetSum += target[approxWithDoc[i].second];
             }
-            error.Stats[0] += queryWeight * (targetSum / TopSize);
+            errorStat0 += queryWeight * (targetSum / TopSize);
         }
-        error.Stats[1] += queryWeight;
+        errorStat1 += queryWeight;
     }
     return error;
 }
@@ -4392,8 +4441,8 @@ void TQueryCrossEntropyMetric::AddSingleQuery(const double* approxes, const floa
                                               TMetricHolder* metricHolder) const {
     const double bestShift = BestQueryShift(approxes, targets, weights, querySize);
 
-    double sum = 0;
-    double weight = 0;
+    double& weight = metricHolder->Stats[1];
+    double& sum = metricHolder->Stats[0];
 
     const bool isSingleClassQuery = IsSingleClassQuery(targets, querySize);
     for (int i = 0; i < querySize; ++i) {
@@ -4418,9 +4467,6 @@ void TQueryCrossEntropyMetric::AddSingleQuery(const double* approxes, const floa
         }
         weight += w;
     }
-
-    metricHolder->Stats[0] += sum;
-    metricHolder->Stats[1] += weight;
 }
 
 
