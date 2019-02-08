@@ -17,6 +17,10 @@
 
 #include <cmath>
 
+#if !defined(METRIC_STATIC_BUFFER)
+# define METRIC_STATIC_BUFFER
+#endif
+
 constexpr double GetDefaultClassificationBorder() {
     return 0.5;
 }
@@ -176,8 +180,12 @@ struct TAdditiveMetric: public TMetric {
 
         const int blockSize = blockParams.GetBlockSize();
         const ui32 blockCount = blockParams.GetBlockCount();
-
+#if defined(METRIC_STATIC_BUFFER)
+        static TVector<TMetricHolder> results;
+        results.yresize(blockCount);
+#else
         TVector<TMetricHolder> results(blockCount);
+#endif
         NPar::ParallelFor(executor, 0, blockCount, [&](int blockId) {
             const int from = begin + blockId * blockSize;
             const int to = Min<int>(begin + (blockId + 1) * blockSize, end);
