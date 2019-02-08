@@ -10,9 +10,8 @@
 #include <util/generic/utility.h>
 #include <util/generic/ymath.h>
 
-#if !defined(MAP_MERGE_TLS)
-# include <util/system/tls.h>
-# define MAP_MERGE_TLS
+#if !defined(MAP_MERGE_FASTREDUCE)
+# define MAP_MERGE_FASTREDUCE
 #endif
 
 namespace NCB {
@@ -43,9 +42,8 @@ namespace NCB {
         } else if (blockCount == 1) {
             mapFunc(indexRangesGenerator.GetRange(0), output);
         } else {
-#if defined(MAP_MERGE_TLS)
-            Y_STATIC_THREAD(TVector<TOutput>) mapOutputsLocal; // TVector is non-POD
-            TVector<TOutput>& mapOutputs = TlsRef(mapOutputsLocal);
+#if defined(MAP_MERGE_FASTREDUCE)
+            static TVector<TOutput> mapOutputs; // w/o first, first is reused from 'output' param
             mapOutputs.yresize(blockCount - 1);
 #else
             TVector<TOutput> mapOutputs(blockCount - 1); // w/o first, first is reused from 'output' param
