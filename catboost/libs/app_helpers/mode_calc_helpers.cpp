@@ -174,7 +174,7 @@ void NCB::CalcModelSingleHost(
             visibleLabelsHelper,
             *datasetPart,
             true,
-            &outputStream,
+            outputStream.Get(),
             // TODO: src file columns output is incompatible with block processing
             poolColumnsPrinter,
             /*testFileWhichOf*/ {0, 0},
