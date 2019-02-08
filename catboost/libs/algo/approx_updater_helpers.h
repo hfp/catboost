@@ -72,9 +72,10 @@ inline void CalcPairwiseWeights(const TVector<TQueryInfo>& queriesInfo, int quer
     for (int queryIndex = 0; queryIndex < queriesCount; ++queryIndex) {
         const auto& queryInfo = queriesInfo[queryIndex];
         for (int docId = 0; docId < queryInfo.Competitors.ysize(); ++docId) {
+            float &docAccum = (*pairwiseWeights)[queryInfo.Begin + docId];
             for (const auto& competitor : queryInfo.Competitors[docId]) {
-                (*pairwiseWeights)[queryInfo.Begin + docId] += competitor.Weight;
                 (*pairwiseWeights)[queryInfo.Begin + competitor.Id] += competitor.Weight;
+                docAccum += competitor.Weight;
             }
         }
     }
