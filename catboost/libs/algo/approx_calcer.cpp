@@ -125,11 +125,13 @@ static void CalcLeafDersImpl(
     TArrayRef<double> leafWeights
 ) {
     for (auto rowIdx : xrange(rowStart, rowStart + rowCount)) {
-        TDers& ders = leafDers[leafIndices[rowIdx]];
-        ders.Der1 += approxDers[rowIdx - rowStart].Der1;
-        ders.Der2 += approxDers[rowIdx - rowStart].Der2;
+        const TIndexType leafIndex = leafIndices[rowIdx];
+        const TDers& approxDer = approxDers[rowIdx - rowStart];
+        TDers& ders = leafDers[leafIndex];
+        ders.Der1 += approxDer.Der1;
+        ders.Der2 += approxDer.Der2;
         const double rowWeight = UseWeights ? weights[rowIdx] : 1;
-        leafWeights[leafIndices[rowIdx]] += rowWeight;
+        leafWeights[leafIndex] += rowWeight;
     }
 }
 
