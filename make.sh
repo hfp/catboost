@@ -4,7 +4,7 @@ HERE=$(cd $(dirname $0); pwd -P)
 BUILD_DIR=${HERE}/catboost/python-package/catboost
 WHEEL_DIR=${BUILD_DIR}/..
 
-YARGS="-r -DHAVE_CUDA=no"
+YARGS="-r -DHAVE_CUDA=no $@"
 
 unset CXX
 unset CC
