@@ -22,13 +22,11 @@ static inline T StdNormalDistribution(TRng&& rng) noexcept {
     } while (T(M_SQRT1_2) < x || T(0) == x);
 #if defined(NORMAL_LOG_FAST)
 # if (3 <= NORMAL_LOG_FAST)
-    return std::sqrt(std::abs(T(M_LN2) + FastLogf(x * x)));
-# elif (3 <= NORMAL_LOG_FAST)
-    return std::sqrt(std::abs(T(M_LN2) + FastLogf(x * x)));
+    return std::sqrt(std::abs(T(M_LN2) + FastestLogf(x * x)));
 # elif (2 <= NORMAL_LOG_FAST)
     return std::sqrt(std::abs(T(M_LN2) + FasterLogf(x * x)));
 # else
-    return std::sqrt(std::abs(T(M_LN2) + FastestLogf(x * x)));
+    return std::sqrt(std::abs(T(M_LN2) + FastLogf(x * x)));
 # endif
 #else
     return std::sqrt(std::abs(T(M_LN2) + std::log(x * x)));
