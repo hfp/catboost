@@ -211,7 +211,7 @@ TMetricHolder TCrossEntropyMetric::EvalSingleThread(
                     nonExpApprox += approxDelta[i];
                 }
                 const double expApprox = exp(nonExpApprox);
-                holderStat0 += w * ((1 - prob) * nonExpApprox + log(1 + 1 / expApprox));
+                holderStat0 += w * (log(expApprox + 1) - prob * nonExpApprox);
             }
             holderStat1 += w;
         }
@@ -967,7 +967,7 @@ TMetricHolder TMSLEMetric::EvalSingleThread(
     double& errorStat1 = error.Stats[1];
     for (int i = begin; i < end; ++i) {
         float w = weight.empty() ? 1 : weight[i];
-        errorStat0 += Sqr(log(1 + approxVec[i]) - log(1 + target[i])) * w;
+        errorStat0 += w * Sqr(log((1 + approxVec[i]) / (1 + target[i])));
         errorStat1 += w;
     }
 
