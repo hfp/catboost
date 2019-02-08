@@ -1718,13 +1718,8 @@ namespace NNetliba_v12 {
     }
 
     void TUdpHost::CancelWaitLow() {
-<<<<<<< HEAD
-        MaxWaitTime2 = 0;
-        if (AtomicGet(IsWaiting) == 1) {
-=======
         MaxWaitTime2.store(0, std::memory_order_release);
-        if (AtomicAdd(IsWaiting, 0) == 1) {
->>>>>>> fe778925b0c0c48433c707c867c1a2ac93bc33cb
+        if (AtomicGet(IsWaiting) == 1) {
             S.CancelWait();
         }
     }

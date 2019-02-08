@@ -1091,15 +1091,9 @@ namespace NNetliba_v12 {
             }
             NHPTimer::GetTime(&pThis->PingsSendT);
             NHPTimer::GetTime(&pThis->ConnectionsCacheT);
-<<<<<<< HEAD
             while (AtomicGet(pThis->KeepRunning) && !AtomicGet(PanicAttack)) {
-                if (HeartbeatTimeout > 0) {
-                    NHPTimer::STime chk = LastHeartbeat;
-=======
-            while (AtomicAdd(pThis->KeepRunning, 0) && !AtomicAdd(PanicAttack, 0)) {
                 if (HeartbeatTimeout.load(std::memory_order_acquire) > 0) {
                     NHPTimer::STime chk = LastHeartbeat.load(std::memory_order_acquire);
->>>>>>> fe778925b0c0c48433c707c867c1a2ac93bc33cb
                     double passed = NHPTimer::GetTimePassed(&chk);
                     if (passed > HeartbeatTimeout.load(std::memory_order_acquire)) {
                         StopAllNetLibaThreads();
