@@ -170,16 +170,10 @@ struct TAdditiveMetric: public TMetric {
         int end,
         NPar::TLocalExecutor& executor
     ) const final {
-        NPar::TLocalExecutor::TExecRangeParams blockParams(begin, end);
-
         const int threadCount = executor.GetThreadCount() + 1;
         const int MinBlockSize = 10000;
-        const int effectiveBlockCount = Min(threadCount, (int)ceil((end - begin) * 1.0 / MinBlockSize));
-
-        blockParams.SetBlockCount(effectiveBlockCount);
-
-        const int blockSize = blockParams.GetBlockSize();
-        const ui32 blockCount = blockParams.GetBlockCount();
+        const int blockCount = Min(threadCount, (end - begin + MinBlockSize - 1) / MinBlockSize);
+        const int blockSize = (end - begin + blockCount - 1) / blockCount;
 #if defined(METRIC_FASTREDUCE)
         static TVector<TMetricHolder> results;
         results.yresize(blockCount);
@@ -197,7 +191,7 @@ struct TAdditiveMetric: public TMetric {
         });
 
         TMetricHolder result;
-        for (int i = 0; i < results.ysize(); ++i) {
+        for (int i = 0; i < blockCount; ++i) {
             result.Add(results[i]);
         }
         return result;
