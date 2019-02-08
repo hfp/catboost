@@ -17,8 +17,8 @@
 
 #include <cmath>
 
-#if !defined(METRIC_STATIC_BUFFER)
-# define METRIC_STATIC_BUFFER
+#if !defined(METRIC_FASTREDUCE)
+# define METRIC_FASTREDUCE
 #endif
 
 constexpr double GetDefaultClassificationBorder() {
@@ -180,7 +180,7 @@ struct TAdditiveMetric: public TMetric {
 
         const int blockSize = blockParams.GetBlockSize();
         const ui32 blockCount = blockParams.GetBlockCount();
-#if defined(METRIC_STATIC_BUFFER)
+#if defined(METRIC_FASTREDUCE)
         static TVector<TMetricHolder> results;
         results.yresize(blockCount);
 #else
