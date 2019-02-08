@@ -23,6 +23,8 @@
 #include "udp_recv_packet.h"
 #include "udp_socket.h"
 
+#include <atomic>
+
 namespace NNetliba_v12 {
     const float UDP_TRANSFER_TIMEOUT = 90;
     const float UDP_KEEP_CONNETION = 600;
@@ -351,7 +353,7 @@ namespace NNetliba_v12 {
         NHPTimer::STime CurrentT;
         TAtomic IsWaiting;
         float MaxWaitTime;
-        volatile float MaxWaitTime2;
+        std::atomic<float> MaxWaitTime2;
         float IBIdleTime;
         TIntrusivePtr<TRequesterPendingDataStats> TotalPendingDataStats;
         TColoredRequesterPendingDataStats ColoredPendingDataStats;
@@ -1684,9 +1686,9 @@ namespace NNetliba_v12 {
             ThreadYield();
         } else {
             AtomicAdd(IsWaiting, 1);
-            if (seconds > MaxWaitTime2)
-                seconds = MaxWaitTime2;
-            MaxWaitTime2 = DEFAULT_MAX_WAIT_TIME;
+            if (seconds > MaxWaitTime2.load(std::memory_order_acquire))
+                seconds = MaxWaitTime2.load(std::memory_order_acquire);
+            MaxWaitTime2.store(DEFAULT_MAX_WAIT_TIME, std::memory_order_release);
 
             if (seconds == 0) {
                 ThreadYield();
@@ -1716,8 +1718,13 @@ namespace NNetliba_v12 {
     }
 
     void TUdpHost::CancelWaitLow() {
+<<<<<<< HEAD
         MaxWaitTime2 = 0;
         if (AtomicGet(IsWaiting) == 1) {
+=======
+        MaxWaitTime2.store(0, std::memory_order_release);
+        if (AtomicAdd(IsWaiting, 0) == 1) {
+>>>>>>> fe778925b0c0c48433c707c867c1a2ac93bc33cb
             S.CancelWait();
         }
     }

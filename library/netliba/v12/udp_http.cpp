@@ -19,14 +19,16 @@
 #include <util/system/shmat.h>
 #include <exception>
 
+#include <atomic>
+
 namespace NNetliba_v12 {
     const float HTTP_TIMEOUT = 15.0f;
     const float CONNECTION_TIMEOUT = 600;
     const int MIN_SHARED_MEM_PACKET = 1000;
 
     static TAtomic PanicAttack;
-    static volatile NHPTimer::STime LastHeartbeat;
-    static volatile double HeartbeatTimeout;
+    static std::atomic<NHPTimer::STime> LastHeartbeat;
+    static std::atomic<double> HeartbeatTimeout;
 
     static int GetTransferSize(TUdpRequest* req) {
         if (req && req->Data.Get())
@@ -1089,13 +1091,19 @@ namespace NNetliba_v12 {
             }
             NHPTimer::GetTime(&pThis->PingsSendT);
             NHPTimer::GetTime(&pThis->ConnectionsCacheT);
+<<<<<<< HEAD
             while (AtomicGet(pThis->KeepRunning) && !AtomicGet(PanicAttack)) {
                 if (HeartbeatTimeout > 0) {
                     NHPTimer::STime chk = LastHeartbeat;
+=======
+            while (AtomicAdd(pThis->KeepRunning, 0) && !AtomicAdd(PanicAttack, 0)) {
+                if (HeartbeatTimeout.load(std::memory_order_acquire) > 0) {
+                    NHPTimer::STime chk = LastHeartbeat.load(std::memory_order_acquire);
+>>>>>>> fe778925b0c0c48433c707c867c1a2ac93bc33cb
                     double passed = NHPTimer::GetTimePassed(&chk);
-                    if (passed > HeartbeatTimeout) {
+                    if (passed > HeartbeatTimeout.load(std::memory_order_acquire)) {
                         StopAllNetLibaThreads();
-                        fprintf(stderr, "%s\tTUdpHttp\tWaiting for %0.2f, time limit %0.2f, commit a suicide!11\n", Now().ToStringUpToSeconds().c_str(), passed, HeartbeatTimeout);
+                        fprintf(stderr, "%s\tTUdpHttp\tWaiting for %0.2f, time limit %0.2f, commit a suicide!11\n", Now().ToStringUpToSeconds().c_str(), passed, HeartbeatTimeout.load(std::memory_order_acquire));
                         fflush(stderr);
 #ifndef _win_
                         killpg(0, SIGKILL);
@@ -1166,9 +1174,9 @@ namespace NNetliba_v12 {
 
             char buf[1000];
             TRequesterUserQueueSizes* qs = QueueSizes.Get();
-            sprintf(buf, "\nRequest queue %d (%d bytes)\n", (int)qs->ReqCount, (int)qs->ReqQueueSize);
+            sprintf(buf, "\nRequest queue %d (%d bytes)\n", (int)AtomicGet(qs->ReqCount), (int)AtomicGet(qs->ReqQueueSize));
             res += buf;
-            sprintf(buf, "Response queue %d (%d bytes)\n", (int)qs->RespCount, (int)qs->RespQueueSize);
+            sprintf(buf, "Response queue %d (%d bytes)\n", (int)AtomicGet(qs->RespCount), (int)AtomicGet(qs->RespQueueSize));
             res += buf;
 
             const char* outReqStateNames[] = {
@@ -1209,10 +1217,10 @@ namespace NNetliba_v12 {
         }
         void GetRequestQueueSize(TRequesterQueueStats* res) override {
             TRequesterUserQueueSizes* qs = QueueSizes.Get();
-            res->ReqCount = (int)qs->ReqCount;
-            res->RespCount = (int)qs->RespCount;
-            res->ReqQueueSize = (int)qs->ReqQueueSize;
-            res->RespQueueSize = (int)qs->RespQueueSize;
+            res->ReqCount = (int)AtomicGet(qs->ReqCount);
+            res->RespCount = (int)AtomicGet(qs->RespCount);
+            res->ReqQueueSize = (int)AtomicGet(qs->ReqQueueSize);
+            res->RespQueueSize = (int)AtomicGet(qs->RespQueueSize);
         }
         TRequesterUserQueueSizes* GetQueueSizes() const {
             return QueueSizes.Get();
@@ -1465,13 +1473,13 @@ namespace NNetliba_v12 {
 
     void SetNetLibaHeartbeatTimeout(double timeoutSec) {
         NetLibaHeartbeat();
-        HeartbeatTimeout = timeoutSec;
+        HeartbeatTimeout.store(timeoutSec, std::memory_order_release);
     }
 
     void NetLibaHeartbeat() {
         NHPTimer::STime now;
         NHPTimer::GetTime(&now);
-        LastHeartbeat = now;
+        LastHeartbeat.store(now, std::memory_order_release);
     }
 
     IRequester* CreateHttpUdpRequester(int port) {
