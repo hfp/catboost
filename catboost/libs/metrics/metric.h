@@ -283,7 +283,7 @@ THolder<IMetric> MakeBinClassF1Metric(double border = GetDefaultClassificationBo
 THolder<IMetric> MakeMultiClassF1Metric(int positiveClass);
 
 THolder<IMetric> MakeTotalF1Metric(int classesCount = 2);
-#if 0
+#if !defined(METRIC_HOLDER_STATIC)
 THolder<IMetric> MakeMCCMetric(int classesCount = 2);
 #endif
 THolder<IMetric> MakeBrierScoreMetric();

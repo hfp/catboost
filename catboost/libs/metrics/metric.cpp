@@ -2786,7 +2786,7 @@ static void BuildConfusionMatrix(
 
 
 /* MCC */
-#if 0
+#if !defined(METRIC_HOLDER_STATIC)
 namespace {
     struct TMCCMetric : public TAdditiveMetric<TMCCMetric> {
         explicit TMCCMetric(int classesCount)
@@ -2870,6 +2870,7 @@ void TMCCMetric::GetBestValue(EMetricBestValue* valueType, float*) const {
     *valueType = EMetricBestValue::Max;
 }
 #endif
+
 /* Brier Score */
 
 namespace {
@@ -3122,7 +3123,8 @@ void THammingLossMetric::GetBestValue(EMetricBestValue* valueType, float*) const
 double THammingLossMetric::GetFinalError(const TMetricHolder& error) const {
     return error.Stats[1] > 0 ? error.Stats[0] / error.Stats[1] : 0;
 }
-#if 0
+
+#if !defined(METRIC_HOLDER_STATIC)
 TVector<TString> TMCCMetric::GetStatDescriptions() const {
     TVector<TString> result;
     for (int i = 0; i < ClassesCount; ++i) {
@@ -3133,6 +3135,7 @@ TVector<TString> TMCCMetric::GetStatDescriptions() const {
     return result;
 }
 #endif
+
 /* PairAccuracy */
 
 namespace {
@@ -4167,7 +4170,7 @@ static TVector<THolder<IMetric>> CreateMetric(ELossFunction metric, TMap<TString
         case ELossFunction::TotalF1:
             result.push_back(MakeTotalF1Metric(approxDimension == 1 ? 2 : approxDimension));
             break;
-#if 0
+#if !defined(METRIC_HOLDER_STATIC)
         case ELossFunction::MCC:
             result.push_back(MakeMCCMetric(approxDimension == 1 ? 2 : approxDimension));
             break;
