@@ -16,7 +16,7 @@ struct TMetricHolder {
     explicit TMetricHolder(int statsCount = 0) : Stats(statsCount) {}
     TVector<double> Stats;
 #else
-    TVectorOps<double, double[4]> Stats;
+    NVectorOps::TVectorOps<double, double[4]> Stats;
     explicit TMetricHolder(int statsCount = 0) noexcept {
         Stats.Resize(statsCount);
         for (int i = 0; i < Stats.ycapacity(); ++i) {
