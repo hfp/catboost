@@ -18,12 +18,12 @@ struct TMetricHolder: public NVectorOps::TVectorOps<double, TMetricHolder> {
         if (!other.Stats.Empty()) {
             if (Stats.Empty()) {
                 Stats.Resize(other.Stats.Size());
-                for (int i = 0; i < other.Stats.Size(); ++i) {
+                for (int i = 0; i < other.Stats.ysize(); ++i) {
                     Stats[i] = other.Stats[i];
                 }
             }
             else {
-                for (int i = 0; i < Stats.Size(); ++i) {
+                for (int i = 0; i < Stats.ysize(); ++i) {
                     Stats[i] += other.Stats[i];
                 }
             }
