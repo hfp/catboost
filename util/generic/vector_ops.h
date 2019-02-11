@@ -13,6 +13,7 @@ namespace NVectorOps {
     public:
         using TConstIterator = const T*;
         using TConstReference = const T&;
+        using IVec = TVec;
 
         inline T* Data() const noexcept {
             return Vec().Data();
@@ -111,8 +112,13 @@ namespace NVectorOps {
     public:
         using TConstIterator = const T*;
         using TConstReference = const T*;
+        using IVec = TVectorOpsBase;
 
-        inline T* Data() const noexcept {
+        inline T* Data() noexcept {
+            return buffer;
+        }
+
+        inline const T* Data() const noexcept {
             return buffer;
         }
 
@@ -158,7 +164,12 @@ namespace NVectorOps {
             return !Empty();
         }
 
-        inline T& operator[](size_t n) const noexcept {
+        inline const T& operator[](size_t n) const noexcept {
+            Y_ASSERT(n < Size());
+            return buffer[n];
+        }
+
+        inline T& operator[](size_t n) noexcept {
             Y_ASSERT(n < Size());
             return buffer[n];
         }
@@ -174,6 +185,10 @@ namespace NVectorOps {
 
         inline const_iterator end() const noexcept {
             return End();
+        }
+
+        inline int ysize() const noexcept {
+            return static_cast<int>(Size());
         }
 
         inline size_t size() const noexcept {
@@ -205,9 +220,10 @@ namespace NVectorOps {
     template <class T, class TVec>
     class TVectorOps: public TVectorOpsBase<T, TVec> {
         using TBase = TVectorOpsBase<T, TVec>;
+        using IVec = typename TBase::IVec;
 
-        inline const TVec& Vec() const noexcept {
-            return *static_cast<const TVec*>(this);
+        inline const IVec& Vec() const noexcept {
+            return *static_cast<const IVec*>(this);
         }
 
     public:
