@@ -10,8 +10,9 @@ LS=$(command -v ls)
 RM=$(command -v rm)
 CP=$(command -v cp)
 
+TBBPLTFRM=intel64
 TBBPREFIX="/opt/intel /usr/local /usr ${HOME}"
-TBBLIBDIR="intel64 x86_64-linux-gnu"
+TBBLIBDIR="${TBBPLTFRM} x86_64-linux-gnu"
 HERE=$(cd $(${DIRNAME} $0); pwd -P)
 
 if [ "" != "${SORT}" ] && [ "" != "${TAIL}" ] && [ "" != "${SED}" ] && \
@@ -58,21 +59,21 @@ then
         ${RM} -r ${HERE}/lib
       fi
       echo " deep-copy from ${TBBROOT}/lib"
-      ${MKDIR} -p ${HERE}/lib/intel64
+      ${MKDIR} -p ${HERE}/lib/${TBBPLTFRM}
       for DIR in ${TBBLIBDIR}; do
         if [ -e ${TBBROOT}/lib/${DIR}/libtbb.so ]; then
-          ${CP} -L ${TBBROOT}/lib/${DIR}/libtbb* ${HERE}/lib/intel64
+          ${CP} -L ${TBBROOT}/lib/${DIR}/libtbb* ${HERE}/lib/${TBBPLTFRM}
           break
+        else
+          TBBRTDIR=$(${LS} -1 ${TBBROOT}/lib/${DIR} 2>/dev/null | ${SORT} -V | ${TAIL} -n1)
+          if [ -e ${TBBROOT}/lib/${DIR}/${TBBRTDIR}/libtbb.so ]; then
+            ${CP} -L ${TBBROOT}/lib/${DIR}/${TBBRTDIR}/libtbb* ${HERE}/lib/${TBBPLTFRM}
+            break
+          fi
         fi
       done
-      if [ -e ${HERE}/lib/intel64/libtbb.so ]; then
-        TBBRTNEW=$(${LS} -1 ${HERE}/lib/intel64 2>/dev/null | ${SORT} -V | ${TAIL} -n1)
-        TBBRTCUR=$(${BASENAME} $(${SED} -n "s/ *-L\(..*\)/\1/p" ${HERE}/ya.make.template))
-        if [ "${TBBRTNEW}" = "${TBBRTCUR}" ]; then
-          ${CP} ${HERE}/ya.make.template ${HERE}/ya.make
-        else
-          ${SED} -e "s/\(.*\)-L\(..*\)${TBBRTCUR}/\1-L\2${TBBRTNEW}/" ${HERE}/ya.make.template > ${HERE}/ya.make
-        fi
+      if [ -e ${HERE}/lib/${TBBPLTFRM}/libtbb.so ]; then
+        ${SED} -e "s/\(.*\)-L\(..*\)intel64/\1-L\2${TBBPLTFRM}/" ${HERE}/ya.make.template > ${HERE}/ya.make
         echo "Successfully completed."
       else
         echo "Error: cannot locate libraries!"

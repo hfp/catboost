@@ -18,7 +18,7 @@ IF (TBB)
         GLOBAL -D__TBB
     )
     LDFLAGS(
-        -Lcontrib/libs/tbb/lib/intel64/gcc4.7
+        -Lcontrib/libs/tbb/lib/intel64
     )
     EXTRALIBS(
         -ltbb
