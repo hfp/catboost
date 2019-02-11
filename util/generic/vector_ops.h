@@ -207,6 +207,11 @@ namespace NVectorOps {
             this->Resize(size);
         }
 
+        inline void yresize(int size) noexcept {
+            Y_ASSERT(0 <= size);
+            this->Resize(static_cast<size_t>(size));
+        }
+
         Y_PURE_FUNCTION
         inline bool empty() const noexcept {
             return Empty();

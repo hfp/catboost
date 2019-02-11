@@ -27,8 +27,8 @@ struct TMetricHolder {
     void Add(const TMetricHolder& other) {
         Y_VERIFY(Stats.empty() || other.Stats.empty() || Stats.size() == other.Stats.size());
         if (!other.Stats.empty()) {
-            if (Stats.Empty()) {
-                Stats.Resize(other.Stats.Size());
+            if (Stats.empty()) {
+                Stats.yresize(other.Stats.ysize());
 #if defined(METRIC_HOLDER_STATIC)
                 for (int i = 0; i < other.Stats.ycapacity(); ++i) {
 #else
