@@ -2869,7 +2869,7 @@ TString TMCCMetric::GetDescription() const {
 void TMCCMetric::GetBestValue(EMetricBestValue* valueType, float*) const {
     *valueType = EMetricBestValue::Max;
 }
-
+#endif
 /* Brier Score */
 
 namespace {
@@ -3122,7 +3122,7 @@ void THammingLossMetric::GetBestValue(EMetricBestValue* valueType, float*) const
 double THammingLossMetric::GetFinalError(const TMetricHolder& error) const {
     return error.Stats[1] > 0 ? error.Stats[0] / error.Stats[1] : 0;
 }
-
+#if 0
 TVector<TString> TMCCMetric::GetStatDescriptions() const {
     TVector<TString> result;
     for (int i = 0; i < ClassesCount; ++i) {
