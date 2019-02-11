@@ -2786,7 +2786,7 @@ static void BuildConfusionMatrix(
 
 
 /* MCC */
-
+#if 0
 namespace {
     struct TMCCMetric : public TAdditiveMetric<TMCCMetric> {
         explicit TMCCMetric(int classesCount)
@@ -3132,7 +3132,7 @@ TVector<TString> TMCCMetric::GetStatDescriptions() const {
     }
     return result;
 }
-
+#endif
 /* PairAccuracy */
 
 namespace {
