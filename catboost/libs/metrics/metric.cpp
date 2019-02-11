@@ -4167,11 +4167,11 @@ static TVector<THolder<IMetric>> CreateMetric(ELossFunction metric, TMap<TString
         case ELossFunction::TotalF1:
             result.push_back(MakeTotalF1Metric(approxDimension == 1 ? 2 : approxDimension));
             break;
-
+#if 0
         case ELossFunction::MCC:
             result.push_back(MakeMCCMetric(approxDimension == 1 ? 2 : approxDimension));
             break;
-
+#endif
         case ELossFunction::BrierScore:
             CB_ENSURE(approxDimension == 1, "Brier Score is used only for binary classification problems.");
             result.push_back(MakeBrierScoreMetric());
