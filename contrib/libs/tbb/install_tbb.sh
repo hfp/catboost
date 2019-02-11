@@ -44,18 +44,21 @@ then
         ${RM} -r ${HERE}/include
       fi
       echo " deep-copy from ${TBBROOT}/include"
-      ${MKDIR} -p include && ${CP} -Lr ${TBBROOT}/include/tbb ${HERE}/include
+      ${MKDIR} -p ${HERE}/include && ${CP} -Lr ${TBBROOT}/include/tbb ${HERE}/include
       # truncate tbb_annotate.h to avoid external reference to advisor-annotate.h
       if [ -e ${TBBROOT}/include/serial/tbb/tbb_annotate.h ]; then
         ${CP} -Lr ${TBBROOT}/include/serial ${HERE}/include
         ${CP} /dev/null ${HERE}/include/serial/tbb/tbb_annotate.h
+      else
+        ${MKDIR} -p ${HERE}/include/serial/tbb
+        ${CP} /dev/null ${HERE}/include/serial/tbb/parallel_for.h
       fi
       if [ -d ${HERE}/lib ]; then
         echo -n " delete old directory lib, and"
         ${RM} -r ${HERE}/lib
       fi
       echo " deep-copy from ${TBBROOT}/lib"
-      ${MKDIR} -p lib/intel64
+      ${MKDIR} -p ${HERE}/lib/intel64
       for DIR in ${TBBLIBDIR}; do
         if [ -e ${TBBROOT}/lib/${DIR}/libtbb.so ]; then
           ${CP} -L ${TBBROOT}/lib/${DIR}/libtbb* ${HERE}/lib/intel64
