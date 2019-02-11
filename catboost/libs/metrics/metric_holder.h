@@ -11,6 +11,9 @@ struct TMetricHolder: public NVectorOps::TVectorOps<double, TMetricHolder> {
 
     explicit TMetricHolder(int statsCount = 0) noexcept {
         Stats.Resize(statsCount);
+        for (int i = 0; i < Stats.ycapacity(); ++i) {
+            Stats[i] = 0;
+        }
     }
 
     void Add(const TMetricHolder& other) {
@@ -18,12 +21,12 @@ struct TMetricHolder: public NVectorOps::TVectorOps<double, TMetricHolder> {
         if (!other.Stats.Empty()) {
             if (Stats.Empty()) {
                 Stats.Resize(other.Stats.Size());
-                for (int i = 0; i < other.Stats.ysize(); ++i) {
+                for (int i = 0; i < other.Stats.ycapacity(); ++i) {
                     Stats[i] = other.Stats[i];
                 }
             }
             else {
-                for (int i = 0; i < Stats.ysize(); ++i) {
+                for (int i = 0; i < Stats.ycapacity(); ++i) {
                     Stats[i] += other.Stats[i];
                 }
             }

@@ -101,7 +101,7 @@ namespace NVectorOps {
 
     template <class T, size_t N>
     class TVectorOpsBase<T, T[N]> {
-        static constexpr size_t bufferCapacity = N;
+        constexpr static const size_t bufferCapacity = N;
         T buffer[N];
         size_t bufferSize;
 
@@ -120,6 +120,10 @@ namespace NVectorOps {
 
         inline const T* Data() const noexcept {
             return buffer;
+        }
+
+        inline constexpr static size_t Capacity() noexcept {
+            return bufferCapacity;
         }
 
         inline size_t Size() const noexcept {
@@ -185,6 +189,10 @@ namespace NVectorOps {
 
         inline const_iterator end() const noexcept {
             return End();
+        }
+
+        inline constexpr static int ycapacity() noexcept {
+            return static_cast<int>(Capacity());
         }
 
         inline int ysize() const noexcept {
