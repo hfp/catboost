@@ -7,28 +7,25 @@
 
 // TODO(annaveronika): each metric should implement CreateMetricHolder(), CombineMetricHolders()
 struct TMetricHolder: public NVectorOps::TVectorOps<double, TMetricHolder> {
-    static constexpr int StatsCapacity = 4;
-    value_type Stats[StatsCapacity];
-    int StatsCount;
+    TVectorOps<double, double[4]> Stats;
 
-    explicit TMetricHolder(int statsCount = 0) : StatsCount(statsCount) {
-        Y_VERIFY(StatsCount <= StatsCapacity);
+    explicit TMetricHolder(int statsCount = 0) noexcept {
+        Stats.Resize(statsCount);
     }
 
     void Add(const TMetricHolder& other) {
-        Y_VERIFY(Stats.empty() || other.Stats.empty() || Stats.size() == other.Stats.size());
-        Y_VERIFY(StatsCount <= StatsCapacity && other.StatsCount <= other.StatsCapacity);
-        if (!other.Stats.empty()) {
-            if (Stats.empty()) {
-                for (int i = 0; i < other.StatsCount; ++i) {
+        Y_VERIFY(Stats.Empty() || other.Stats.Empty() || Stats.Size() == other.Stats.Size());
+        if (!other.Stats.Empty()) {
+            if (Stats.Empty()) {
+                Stats.Resize(other.Stats.Size());
+                for (int i = 0; i < other.Stats.Size(); ++i) {
                     Stats[i] = other.Stats[i];
                 }
-                StatsCount = other.StatsCount
             }
             else {
-                for (int i = 0; i < StatsCount; ++i) {
+                for (int i = 0; i < Stats.Size(); ++i) {
                     Stats[i] += other.Stats[i];
-                }              
+                }
             }
         }
     }

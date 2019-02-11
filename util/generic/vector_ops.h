@@ -98,6 +98,110 @@ namespace NVectorOps {
         }
     };
 
+    template <class T, size_t N>
+    class TVectorOpsBase<T, T[N]> {
+        static constexpr size_t bufferCapacity = N;
+        T buffer[N];
+        size_t bufferSize;
+
+        inline const T* Vec() const noexcept {
+            return buffer;
+        }
+
+    public:
+        using TConstIterator = const T*;
+        using TConstReference = const T*;
+
+        inline T* Data() const noexcept {
+            return buffer;
+        }
+
+        inline size_t Size() const noexcept {
+            return bufferSize;
+        }
+
+        inline void Resize(size_t size) noexcept {
+            Y_ASSERT(size <= bufferCapacity);
+            bufferSize = size;
+        }
+
+        Y_PURE_FUNCTION
+        inline bool Empty() const noexcept {
+            return 0 == bufferSize;
+        }
+
+        inline TConstIterator Begin() const noexcept {
+            return Data();
+        }
+
+        inline TConstIterator End() const noexcept {
+            return Data() + Size();
+        }
+
+        inline TConstReference Front() const noexcept {
+            return (*this)[0];
+        }
+
+        inline TConstReference Back() const noexcept {
+            Y_ASSERT(!Empty());
+            return (*this)[bufferSize - 1];
+        }
+
+        inline TConstReference At(size_t n) const {
+            if (n >= Size()) {
+                ThrowRangeError("array ref range error");
+            }
+            return buffer[n];
+        }
+
+        inline explicit operator bool() const noexcept {
+            return !Empty();
+        }
+
+        inline T& operator[](size_t n) const noexcept {
+            Y_ASSERT(n < Size());
+            return buffer[n];
+        }
+
+        //compat, do not use
+        using const_iterator = TConstIterator;
+        using const_reference = TConstReference;
+        using value_type = T;
+
+        inline const_iterator begin() const noexcept {
+            return Begin();
+        }
+
+        inline const_iterator end() const noexcept {
+            return End();
+        }
+
+        inline size_t size() const noexcept {
+            return Size();
+        }
+
+        inline void resize(size_t size) noexcept {
+            this->Resize(size);
+        }
+
+        Y_PURE_FUNCTION
+        inline bool empty() const noexcept {
+            return Empty();
+        }
+
+        inline const_reference front() const noexcept {
+            return Front();
+        }
+
+        inline const_reference back() const noexcept {
+            return Back();
+        }
+
+        inline const_reference at(size_t n) const {
+            return At(n);
+        }
+    };
+
     template <class T, class TVec>
     class TVectorOps: public TVectorOpsBase<T, TVec> {
         using TBase = TVectorOpsBase<T, TVec>;
