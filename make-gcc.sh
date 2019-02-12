@@ -6,7 +6,7 @@ WHEEL_DIR=${BUILD_DIR}/..
 
 YCXX=g++
 YCC=gcc
-YARGS="-r -DHAVE_CUDA=no --c-compiler=${YCC} --cxx-compiler=${YCXX} $@"
+YARGS="-DHAVE_CUDA=no --c-compiler=${YCC} --cxx-compiler=${YCXX} -r $@"
 
 unset CXX
 export CC=${YCC}
