@@ -104,8 +104,8 @@ void CalculatePairwiseScore(
 
     for (int y = 0; y < leafCount; ++y) {
         const auto& baseData = pairWeightStatistics[y];
-        auto& weightSy1 = weightSum[2 * y + 1];
-        auto& weightS11 = weightSy1[2 * y + 1];
+        double* weightSy1 = weightSum[2 * y + 1];
+        double& weightS11 = weightSy1[2 * y + 1];
         for (int x = y + 1; x < leafCount; ++x) {
             const TBucketPairWeightStatistics* xyData = pairWeightStatistics[x][y].data();
             const TBucketPairWeightStatistics* yxData = baseData[x].data();
@@ -139,10 +139,10 @@ void CalculatePairwiseScore(
             const auto& pairWeightStatistics_Y0 = pairWeightStatistics[y];
             const double weightDelta = (pairWeightStatistics_Y0[y][splitId].SmallerBorderWeightSum -
                 pairWeightStatistics_Y0[y][splitId].GreaterBorderRightWeightSum);
-            auto& weightSy0 = weightSum[2 * y];
-            auto& weightSy1 = weightSum[2 * y + 1];
-            auto& weightS00 = weightSy0[2 * y];
-            auto& weightS11 = weightSy1[2 * y + 1];
+            double* weightSy0 = weightSum[2 * y];
+            double* weightSy1 = weightSum[2 * y + 1];
+            double& weightS00 = weightSy0[2 * y];
+            double& weightS11 = weightSy1[2 * y + 1];
             weightSy0[2 * y + 1] += weightDelta;
             weightSy1[2 * y] += weightDelta;
             weightS00 -= weightDelta;
