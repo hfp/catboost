@@ -2752,6 +2752,7 @@ TVector<TString> TTotalF1Metric::GetStatDescriptions() const {
 
 /* Confusion matrix */
 
+#if !defined(METRIC_HOLDER_STATIC)
 static double& GetValue(TVector<double>& squareMatrix, int i, int j) {
     int columns = sqrt(squareMatrix.size());
     Y_ASSERT(columns * columns == squareMatrix.ysize());
@@ -2786,7 +2787,6 @@ static void BuildConfusionMatrix(
 
 
 /* MCC */
-#if !defined(METRIC_HOLDER_STATIC)
 namespace {
     struct TMCCMetric : public TAdditiveMetric<TMCCMetric> {
         explicit TMCCMetric(int classesCount)
