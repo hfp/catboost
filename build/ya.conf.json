@@ -1339,7 +1339,7 @@
         },
         "ymake": {
             "formula": {
-                "sandbox_id": [377274055],
+                "sandbox_id": [373382332],
                 "match": "ymake"
             },
             "executable": {
@@ -1357,7 +1357,7 @@
         },
         "test_tool": {
             "formula": {
-                "sandbox_id": [370774111],
+                "sandbox_id": [377484394],
                 "match": "test_tool"
             },
             "executable": {

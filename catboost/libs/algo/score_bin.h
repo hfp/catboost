@@ -1,6 +1,8 @@
 #pragma once
 
 #include <util/generic/vector.h>
+#include <util/generic/xrange.h>
+
 #if !defined(SCORE_BIN_TLS)
 # include <util/system/tls.h>
 # define SCORE_BIN_TLS
@@ -25,16 +27,16 @@ const TVector<double>&
 TVector<double>
 #endif
 GetScores(const TVector<TScoreBin>& scoreBin) {
-    const int splitCount = scoreBin.ysize() - 1;
+        scores[splitIdx] = scoreBin[splitIdx].GetScore();
 #if defined(SCORE_BIN_TLS)
     Y_STATIC_THREAD(TVector<double>) scores_local; // TVector is non-POD
     TVector<double>& scores = TlsRef(scores_local);
-    scores.resize(splitCount);
+    scores.resize(scoreBin.size());
 #else
-    TVector<double> scores(splitCount);
+    TVector<double> scores(scoreBin.size());
 #endif
-    for (int splitIdx = 0; splitIdx < splitCount; ++splitIdx) {
-        scores[splitIdx] = scoreBin[splitIdx].GetScore();
+    for (auto i : xrange(scoreBin.size())) {
+        scores[i] = scoreBin[i].GetScore();
     }
     return scores;
 }
