@@ -40,7 +40,6 @@ public:
             PData[i] = data;
             data += XSize;
         }
-        if (1 == Capacity) Data[0] = 0; // Clear()
     }
     TArray2D(const TArray2D& a)
         : Data( (0 != a.XSize && 0 != a.YSize) ? new T[a.XSize * a.YSize] : NULL)
@@ -81,7 +80,6 @@ public:
     }
     void Clear() {
         this->SetSizes(1, 1);
-        Data[0] = 0;
     }
 #ifdef _DEBUG
     TBoundCheck<T> operator[](size_t i) const {
