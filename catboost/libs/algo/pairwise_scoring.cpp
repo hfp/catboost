@@ -134,24 +134,30 @@ void CalculatePairwiseScore(
     const auto& pairWeightStatistics = pairwiseStats.PairWeightStatistics;
 
     const int leafCount = derSums.ysize();
+#if defined(PAIRWISE_SCORING_TLS)
+    Y_STATIC_THREAD(TArray2D<double>) weightSumLocal(0); // TArray2D is non-POD
+    TArray2D<double>& weightSum = TlsRef(weightSumLocal);
+    weightSum.SetSizes(2 * leafCount, 2 * leafCount);
 
+    Y_STATIC_THREAD(TVector<double>) derSumLocal; // TVector is non-POD
+    TArray2D<double>& derSum = TlsRef(derSumLocal);
+    derSum.yresize(2 * leafCount);
+#else
     TArray2D<double> weightSum(2 * leafCount, 2 * leafCount);
-
+    TVector<double> derSum(2 * leafCount);
+#endif
     if (pairwiseStats.SplitEnsembleSpec.IsBinarySplitsPack) {
         const int binaryFeaturesCount = (int)GetValueBitCount(bucketCount - 1);
 
         scoreBins->yresize(binaryFeaturesCount);
 
-        TVector<double> binDerSums;
-        binDerSums.yresize(2 * leafCount);
-
         for (int binFeatureIdx = 0; binFeatureIdx < binaryFeaturesCount; ++binFeatureIdx) {
-            binDerSums.assign(2 * leafCount, 0.0);
+            derSum.assign(2 * leafCount, 0.0);
 
             for (int y = 0; y < leafCount; ++y) {
                 const auto& srcDerSums = derSums[y];
                 for (int bucketIdx = 0; bucketIdx < bucketCount; ++bucketIdx) {
-                    binDerSums[y * 2 + ((bucketIdx >> binFeatureIdx) & 1)] += srcDerSums[bucketIdx];
+                    derSum[y * 2 + ((bucketIdx >> binFeatureIdx) & 1)] += srcDerSums[bucketIdx];
                 }
             }
 
@@ -185,14 +191,14 @@ void CalculatePairwiseScore(
                 }
             }
 
-            const TVector<double> leafValues = CalculatePairwiseLeafValues(weightSum, binDerSums, l2DiagReg, pairwiseBucketWeightPriorReg);
+            const TVector<double>& leafValues = CalculatePairwiseLeafValues(weightSum, derSum, l2DiagReg, pairwiseBucketWeightPriorReg);
             (*scoreBins)[binFeatureIdx].D2 = 1.0;
-            (*scoreBins)[binFeatureIdx].DP = CalculateScore(leafValues, binDerSums, weightSum);
+            (*scoreBins)[binFeatureIdx].DP = CalculateScore(leafValues, derSum, weightSum);
         }
     } else {
         scoreBins->yresize(bucketCount - 1);
 
-        TVector<double> derSum(2 * leafCount, 0.0);
+        derSum.assign(2 * leafCount, 0.0);
         weightSum.FillZero();
 
         for (int leafId = 0; leafId < leafCount; ++leafId) {
