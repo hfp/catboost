@@ -28,8 +28,8 @@ TVector<double>
 #endif
 GetScores(const TVector<TScoreBin>& scoreBin) {
 #if defined(SCORE_BIN_TLS)
-    Y_STATIC_THREAD(TVector<double>) scores_local; // TVector is non-POD
-    TVector<double>& scores = TlsRef(scores_local);
+    Y_STATIC_THREAD(TVector<double>) scoresLocal; // TVector is non-POD
+    TVector<double>& scores = TlsRef(scoresLocal);
     scores.resize(scoreBin.size());
 #else
     TVector<double> scores(scoreBin.size());
