@@ -8,6 +8,11 @@
 #include <vector>
 #include <initializer_list>
 
+#if !defined(VECTOR_TLS)
+# include <util/system/tls.h>
+# define VECTOR_TLS
+#endif
+
 template <class T>
 struct TVectorTraits {
     using Type = typename std::remove_cv<T>::type;
@@ -36,6 +41,21 @@ public:
     using TBase = std::vector<TValue, TReboundAllocator<A, TValue>>;
     using TSelf = TVector<T, A>;
     using size_type = typename TBase::size_type;
+
+#if defined(VECTOR_TLS)
+    inline static const TVector& Zeros(size_type count)
+    {
+        Y_STATIC_THREAD(TVector) zerosLocal; // TVector is non-POD
+        TVector& result = TlsRef(zerosLocal);
+        result.yresize(count);
+        return result;
+    }
+#else
+    inline static TVector Zeros(size_type count)
+    {
+        return TVector(count);
+    }
+#endif
 
     inline TVector()
         : TBase()
