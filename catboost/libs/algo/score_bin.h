@@ -27,7 +27,6 @@ const TVector<double>&
 TVector<double>
 #endif
 GetScores(const TVector<TScoreBin>& scoreBin) {
-        scores[splitIdx] = scoreBin[splitIdx].GetScore();
 #if defined(SCORE_BIN_TLS)
     Y_STATIC_THREAD(TVector<double>) scores_local; // TVector is non-POD
     TVector<double>& scores = TlsRef(scores_local);
