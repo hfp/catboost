@@ -10,6 +10,11 @@
 
 #include <library/binsaver/bin_saver.h>
 
+#if !defined(PAIRWISE_SCORING_TLS)
+# include <util/system/tls.h>
+# define PAIRWISE_SCORING_TLS
+#endif
+
 struct TBucketPairWeightStatistics {
     double SmallerBorderWeightSum = 0.0; // The weight sum of pair elements with smaller border.
     double GreaterBorderRightWeightSum = 0.0; // The weight sum of pair elements with greater border.
@@ -40,7 +45,12 @@ struct TPairwiseStats {
 
 // TGetBucketFunc is of type ui32(ui32 docId)
 template <class TGetBucketFunc>
-inline TVector<TVector<double>> ComputeDerSums(
+#if defined(PAIRWISE_SCORING_TLS)
+inline const TVector<TVector<double>>&
+#else
+inline TVector<TVector<double>>
+#endif
+ComputeDerSums(
     TConstArrayRef<double> weightedDerivativesData,
     int leafCount,
     int bucketCount,
@@ -48,8 +58,13 @@ inline TVector<TVector<double>> ComputeDerSums(
     TGetBucketFunc getBucketFunc,
     NCB::TIndexRange<int> docIndexRange
 ) {
-    TVector<TVector<double>> derSums(leafCount, TVector<double>(bucketCount));
-
+#if defined(PAIRWISE_SCORING_TLS)
+    Y_STATIC_THREAD(TVector<TVector<double>>) derSumsLocal; // TVector is non-POD
+    TVector<TVector<double>>& derSums = TlsRef(derSumsLocal);
+    derSums.resize(leafCount, TVector<double>::Zeros(bucketCount));
+#else
+    TVector<TVector<double>> derSums(leafCount, TVector<double>::Zeros(bucketCount));
+#endif
     for (int docId : docIndexRange.Iter()) {
         const ui32 leafIndex = leafIndices[docId];
         const ui32 bucketIndex = getBucketFunc((ui32)docId);
@@ -60,7 +75,12 @@ inline TVector<TVector<double>> ComputeDerSums(
 
 // TGetBucketFunc is of type ui32(ui32 docId)
 template <class TGetBucketFunc>
-inline TArray2D<TVector<TBucketPairWeightStatistics>> ComputePairWeightStatistics(
+#if defined(PAIRWISE_SCORING_TLS)
+inline const TArray2D<TVector<TBucketPairWeightStatistics>>&
+#else
+inline TArray2D<TVector<TBucketPairWeightStatistics>>
+#endif
+ComputePairWeightStatistics(
     const TFlatPairsInfo& pairs,
     int leafCount,
     int bucketCount,
@@ -68,8 +88,14 @@ inline TArray2D<TVector<TBucketPairWeightStatistics>> ComputePairWeightStatistic
     TGetBucketFunc getBucketFunc,
     NCB::TIndexRange<int> pairIndexRange
 ) {
+#if defined(PAIRWISE_SCORING_TLS)
+    Y_STATIC_THREAD(TArray2D<TVector<TBucketPairWeightStatistics>>) weightSumsLocal(0); // TArray2D is non-POD
+    TArray2D<TVector<TBucketPairWeightStatistics>>& weightSums = TlsRef(weightSumsLocal);
+    weightSums.SetSizes(leafCount, leafCount);
+#else
     TArray2D<TVector<TBucketPairWeightStatistics>> weightSums(leafCount, leafCount);
-    weightSums.FillEvery(TVector<TBucketPairWeightStatistics>(bucketCount));
+#endif
+    weightSums.FillEvery(TVector<TBucketPairWeightStatistics>::Zeros(bucketCount));
     for (size_t pairIdx : pairIndexRange.Iter()) {
         const auto winnerIdx = pairs[pairIdx].WinnerId;
         const auto loserIdx = pairs[pairIdx].LoserId;
@@ -95,7 +121,12 @@ inline TArray2D<TVector<TBucketPairWeightStatistics>> ComputePairWeightStatistic
 
 // TGetBinaryFeaturesPack is of type TBinaryFeaturesPack(ui32 docId)
 template <class TGetBinaryFeaturesPack>
-inline TArray2D<TVector<TBucketPairWeightStatistics>> ComputePairWeightStatisticsForBinaryFeaturesPacks(
+#if defined(PAIRWISE_SCORING_TLS)
+inline const TArray2D<TVector<TBucketPairWeightStatistics>>&
+#else
+inline TArray2D<TVector<TBucketPairWeightStatistics>>
+#endif
+ComputePairWeightStatisticsForBinaryFeaturesPacks(
     const TFlatPairsInfo& pairs,
     int leafCount,
     int bucketCount,
@@ -103,10 +134,15 @@ inline TArray2D<TVector<TBucketPairWeightStatistics>> ComputePairWeightStatistic
     TGetBinaryFeaturesPack getBinaryFeaturesPack,
     NCB::TIndexRange<int> pairIndexRange
 ) {
-    const int binaryFeaturesCount = (int)GetValueBitCount(bucketCount - 1);
-
+#if defined(PAIRWISE_SCORING_TLS)
+    Y_STATIC_THREAD(TArray2D<TVector<TBucketPairWeightStatistics>>) weightSumsLocal(0); // TArray2D is non-POD
+    TArray2D<TVector<TBucketPairWeightStatistics>>& weightSums = TlsRef(weightSumsLocal);
+    weightSums.SetSizes(leafCount, leafCount);
+#else
     TArray2D<TVector<TBucketPairWeightStatistics>> weightSums(leafCount, leafCount);
-    weightSums.FillEvery(TVector<TBucketPairWeightStatistics>(2 * binaryFeaturesCount));
+#endif
+    const int binaryFeaturesCount = (int)GetValueBitCount(bucketCount - 1);
+    weightSums.FillEvery(TVector<TBucketPairWeightStatistics>::Zeros(2 * binaryFeaturesCount));
     for (size_t pairIdx : pairIndexRange.Iter()) {
         const auto winnerIdx = pairs[pairIdx].WinnerId;
         const auto loserIdx = pairs[pairIdx].LoserId;
