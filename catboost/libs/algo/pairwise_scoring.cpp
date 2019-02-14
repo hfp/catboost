@@ -80,10 +80,12 @@ static double CalculateScore(const TVector<double>& avrg, const TVector<double>&
 
 inline static void UpdateWeightSumFromTotal(int y, int x, double total, TArray2D<double>* weightSum) {
     auto& weightSumRef = *weightSum;
-    weightSumRef[2 * y + 1][2 * x + 1] += total;
-    weightSumRef[2 * x + 1][2 * y + 1] += total;
-    weightSumRef[2 * x + 1][2 * x + 1] -= total;
-    weightSumRef[2 * y + 1][2 * y + 1] -= total;
+    double *const weightSumRx1 = weightSumRef[2 * x + 1];
+    double *const weightSumRy1 = weightSumRef[2 * y + 1];
+    weightSumRy1[2 * x + 1] += total;
+    weightSumRx1[2 * y + 1] += total;
+    weightSumRx1[2 * x + 1] -= total;
+    weightSumRy1[2 * y + 1] -= total;
 }
 
 
@@ -100,20 +102,24 @@ inline static void UpdateWeightSumFromNonDiagStats(
     const double w11Delta = -(xy.SmallerBorderWeightSum + yx.SmallerBorderWeightSum);
 
     auto& weightSumRef = *weightSum;
+    double *const weightSumRx0 = weightSumRef[2 * x];
+    double *const weightSumRy0 = weightSumRef[2 * y];
+    double *const weightSumRx1 = weightSumRx0 + 1;
+    double *const weightSumRy1 = weightSumRy0 + 1;
 
-    weightSumRef[2 * x][2 * y] += w00Delta;
-    weightSumRef[2 * y][2 * x] += w00Delta;
-    weightSumRef[2 * x][2 * y + 1] += w01Delta;
-    weightSumRef[2 * y + 1][2 * x] += w01Delta;
-    weightSumRef[2 * x + 1][2 * y] += w10Delta;
-    weightSumRef[2 * y][2 * x + 1] += w10Delta;
-    weightSumRef[2 * x + 1][2 * y + 1] += w11Delta;
-    weightSumRef[2 * y + 1][2 * x + 1] += w11Delta;
+    weightSumRx0[2 * y] += w00Delta;
+    weightSumRy0[2 * x] += w00Delta;
+    weightSumRx0[2 * y + 1] += w01Delta;
+    weightSumRy1[2 * x] += w01Delta;
+    weightSumRx1[2 * y] += w10Delta;
+    weightSumRy0[2 * x + 1] += w10Delta;
+    weightSumRx1[2 * y + 1] += w11Delta;
+    weightSumRy1[2 * x + 1] += w11Delta;
 
-    weightSumRef[2 * y][2 * y] -= w00Delta + w10Delta;
-    weightSumRef[2 * x][2 * x] -= w00Delta + w01Delta;
-    weightSumRef[2 * x + 1][2 * x + 1] -= w10Delta + w11Delta;
-    weightSumRef[2 * y + 1][2 * y + 1] -= w01Delta + w11Delta;
+    weightSumRy0[2 * y] -= w00Delta + w10Delta;
+    weightSumRx0[2 * x] -= w00Delta + w01Delta;
+    weightSumRx1[2 * x + 1] -= w10Delta + w11Delta;
+    weightSumRy1[2 * y + 1] -= w01Delta + w11Delta;
 }
 
 
@@ -143,8 +149,9 @@ void CalculatePairwiseScore(
             binDerSums.assign(2 * leafCount, 0.0);
 
             for (int y = 0; y < leafCount; ++y) {
+                const auto& srcDerSums = derSums[y];
                 for (int bucketIdx = 0; bucketIdx < bucketCount; ++bucketIdx) {
-                    binDerSums[y * 2 + ((bucketIdx >> binFeatureIdx) & 1)] += derSums[y][bucketIdx];
+                    binDerSums[y * 2 + ((bucketIdx >> binFeatureIdx) & 1)] += srcDerSums[bucketIdx];
                 }
             }
 
@@ -189,15 +196,18 @@ void CalculatePairwiseScore(
         weightSum.FillZero();
 
         for (int leafId = 0; leafId < leafCount; ++leafId) {
+            const auto& dstDerSum = derSum[2 * leafId + 1];
+            const auto& srcDerSums = derSums[leafId];
             for (int bucketIdx = 0; bucketIdx < bucketCount; ++bucketIdx) {
-                derSum[2 * leafId + 1] += derSums[leafId][bucketIdx];
+                dstDerSum += srcDerSums[bucketIdx];
             }
         }
 
         for (int y = 0; y < leafCount; ++y) {
+            const auto& pairWeightStatisticsOfY = pairWeightStatistics[y];
             for (int x = y + 1; x < leafCount; ++x) {
                 const TBucketPairWeightStatistics* xyData = pairWeightStatistics[x][y].data();
-                const TBucketPairWeightStatistics* yxData = pairWeightStatistics[y][x].data();
+                const TBucketPairWeightStatistics* yxData = pairWeightStatisticsOfY[x].data();
                 __m128d totalXY0 = _mm_setzero_pd();
                 __m128d totalXY2 = _mm_setzero_pd();
                 __m128d totalYX0 = _mm_setzero_pd();
@@ -223,12 +233,13 @@ void CalculatePairwiseScore(
 
         for (int splitId = 0; splitId < bucketCount - 1; ++splitId) {
             for (int y = 0; y < leafCount; ++y) {
+                const auto& pairWeightStatisticsOfY = pairWeightStatistics[y];
                 const double derDelta = derSums[y][splitId];
                 derSum[2 * y] += derDelta;
                 derSum[2 * y + 1] -= derDelta;
 
-                const double weightDelta = (pairWeightStatistics[y][y][splitId].SmallerBorderWeightSum -
-                    pairWeightStatistics[y][y][splitId].GreaterBorderRightWeightSum);
+                const double weightDelta = (pairWeightStatisticsOfY[y][splitId].SmallerBorderWeightSum -
+                    pairWeightStatisticsOfY[y][splitId].GreaterBorderRightWeightSum);
                 weightSum[2 * y][2 * y + 1] += weightDelta;
                 weightSum[2 * y + 1][2 * y] += weightDelta;
                 weightSum[2 * y][2 * y] -= weightDelta;
@@ -236,13 +247,13 @@ void CalculatePairwiseScore(
 
                 for (int x = y + 1; x < leafCount; ++x) {
                     const TBucketPairWeightStatistics& xy = pairWeightStatistics[x][y][splitId];
-                    const TBucketPairWeightStatistics& yx = pairWeightStatistics[y][x][splitId];
+                    const TBucketPairWeightStatistics& yx = pairWeightStatisticsOfY[x][splitId];
 
                     UpdateWeightSumFromNonDiagStats(y, x, xy, yx, &weightSum);
                 }
             }
 
-            const TVector<double> leafValues = CalculatePairwiseLeafValues(weightSum, derSum, l2DiagReg, pairwiseBucketWeightPriorReg);
+            const TVector<double>& leafValues = CalculatePairwiseLeafValues(weightSum, derSum, l2DiagReg, pairwiseBucketWeightPriorReg);
             (*scoreBins)[splitId].D2 = 1.0;
             (*scoreBins)[splitId].DP = CalculateScore(leafValues, derSum, weightSum);
         }
