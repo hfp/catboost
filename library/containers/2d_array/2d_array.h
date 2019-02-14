@@ -31,20 +31,21 @@ private:
 
 public:
     TArray2D(size_t xsize = 1, size_t ysize = 1)
-        : XSize(xsize), YSize(ysize), Capacity(xsize * ysize)
-        , Data(0 < Capacity ? new T[Capacity] : NULL)
-        , PData(0 < Capacity ? new PT[ysize] : NULL)
+        : Data( (0 != xsize && 0 != ysize) ? new T[xsize * ysize] : NULL)
+        , PData((0 != xsize && 0 != ysize) ? new PT[ysize] : NULL)
+        , XSize(xsize), YSize(ysize), Capacity(xsize * ysize)
     {
         T* data = Data;
         for (size_t i = 0; i < YSize; ++i) {
             PData[i] = data;
             data += XSize;
         }
+        if (1 == Capacity) Data[0] = 0; // Clear()
     }
     TArray2D(const TArray2D& a)
-        : XSize(a.XSize), YSize(a.YSize), Capacity(a.XSize * a.YSize)
-        , Data(0 < Capacity ? new T[Capacity] : NULL)
-        , PData(0 < Capacity ? new PT[a.YSize] : NULL)
+        : Data( (0 != a.XSize && 0 != a.YSize) ? new T[a.XSize * a.YSize] : NULL)
+        , PData((0 != a.XSize && 0 != a.YSize) ? new PT[a.YSize] : NULL)
+        , XSize(a.XSize), YSize(a.YSize), Capacity(a.XSize * a.YSize)
     {
         size_t k = 0;
         for (size_t j = 0; j < YSize; ++j) {
@@ -58,8 +59,8 @@ public:
     }
     TArray2D& operator=(const TArray2D& a) {
         const size_t size = a.XSize * a.YSize;
-        SetSizes(a.XSize, a.YSize)();
-        memcpy(Data, a.Data, sizeof(T) * size);
+        this->SetSizes(a.XSize, a.YSize);
+        std::copy_n(a.Data, size, Data);
         return *this;
     }
     ~TArray2D() {
@@ -79,7 +80,7 @@ public:
         }
     }
     void Clear() {
-        SetSizes(1, 1);
+        this->SetSizes(1, 1);
         Data[0] = 0;
     }
 #ifdef _DEBUG
