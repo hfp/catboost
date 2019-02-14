@@ -196,7 +196,7 @@ void CalculatePairwiseScore(
         weightSum.FillZero();
 
         for (int leafId = 0; leafId < leafCount; ++leafId) {
-            const auto& dstDerSum = derSum[2 * leafId + 1];
+            auto& dstDerSum = derSum[2 * leafId + 1];
             const auto& srcDerSums = derSums[leafId];
             for (int bucketIdx = 0; bucketIdx < bucketCount; ++bucketIdx) {
                 dstDerSum += srcDerSums[bucketIdx];
