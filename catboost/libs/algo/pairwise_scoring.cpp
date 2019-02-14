@@ -138,9 +138,8 @@ void CalculatePairwiseScore(
     Y_STATIC_THREAD(TArray2D<double>) weightSumLocal(0); // TArray2D is non-POD
     TArray2D<double>& weightSum = TlsRef(weightSumLocal);
     weightSum.SetSizes(2 * leafCount, 2 * leafCount);
-
     Y_STATIC_THREAD(TVector<double>) derSumLocal; // TVector is non-POD
-    TArray2D<double>& derSum = TlsRef(derSumLocal);
+    TVector<double>& derSum = TlsRef(derSumLocal);
     derSum.yresize(2 * leafCount);
 #else
     TArray2D<double> weightSum(2 * leafCount, 2 * leafCount);
