@@ -275,6 +275,7 @@ def main():
     }
 
     parser = argparse.ArgumentParser()
+    parser.add_argument('--file_name', required=False)
     parser.add_argument('--type', choices=plot_functions.keys(), required=True)
     parser.add_argument('--only', nargs='+', choices=ONLY_TYPES.keys(), required=False)
     parser.add_argument('-i', '--results-file', required=True)
