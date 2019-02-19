@@ -1338,7 +1338,7 @@
         },
         "ymake": {
             "formula": {
-                "sandbox_id": [373382332],
+                "sandbox_id": [380448500],
                 "match": "ymake"
             },
             "executable": {
@@ -1374,7 +1374,7 @@
         },
         "arc": {
             "formula": {
-                "sandbox_id": [378569518],
+                "sandbox_id": [380631007],
                 "match": "arc"
             },
             "executable": {
