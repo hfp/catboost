@@ -11,6 +11,7 @@ unset CC
 export PYTHONPATH=$PYTHONPATH:${WHEEL_DIR}
 export YA_CACHE_DIR=/tmp/catboost-cache
 mkdir -p ${YA_CACHE_DIR}
+chmod +x ${HERE}/ya
 
 cd ${BUILD_DIR}
 ${HERE}/ya make ${YARGS}
