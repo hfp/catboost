@@ -63,7 +63,7 @@ then
           ${HERE}/include/tbb/machine/windows_api.h
       fi
       if [ -e ${TBBROOT}/include/tbb/concurrent_vector.h ]; then
-        ${SED} -e "s/: *my_early_size/: my_early_size.load(std::memory_order_relaxed)/" \
+        ${SED} -e "s/: *my_early_size/: my_early_size.load()/" \
           ${TBBROOT}/include/tbb/concurrent_vector.h > \
           ${HERE}/include/tbb/concurrent_vector.h
       fi
