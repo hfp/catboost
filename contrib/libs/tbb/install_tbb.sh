@@ -12,7 +12,7 @@ CP=$(command -v cp)
 
 TBBPLTFRM=intel64
 TBBPREFIX="/opt/intel /usr/local /usr ${HOME}"
-TBBLIBDIR="${TBBPLTFRM} x86_64-linux-gnu"
+TBBLIBDIR="lib/${TBBPLTFRM} lib/x86_64-linux-gnu lib64"
 HERE=$(cd $(${DIRNAME} $0); pwd -P)
 
 if [ "" != "${SORT}" ] && [ "" != "${TAIL}" ] && [ "" != "${SED}" ] && \
@@ -54,6 +54,19 @@ then
         ${MKDIR} -p ${HERE}/include/serial/tbb
         ${CP} /dev/null ${HERE}/include/serial/tbb/parallel_for.h
       fi
+      if [ -e ${TBBROOT}/include/tbb/machine/xbox360_ppc.h ]; then
+        ${CP} /dev/null ${HERE}/include/tbb/machine/xbox360_ppc.h
+      fi
+      if [ -e ${TBBROOT}/include/tbb/machine/windows_api.h ]; then
+        ${SED} -e "s/#include *<xtl\.h>//" \
+          ${TBBROOT}/include/tbb/machine/windows_api.h > \
+          ${HERE}/include/tbb/machine/windows_api.h
+      fi
+      if [ -e ${TBBROOT}/include/tbb/concurrent_vector.h ]; then
+        ${SED} -e "s/: *my_early_size/: my_early_size.load(std::memory_order_relaxed)/" \
+          ${TBBROOT}/include/tbb/concurrent_vector.h > \
+          ${HERE}/include/tbb/concurrent_vector.h
+      fi
       if [ -d ${HERE}/lib ]; then
         echo -n " delete old directory lib, and"
         ${RM} -r ${HERE}/lib
@@ -61,13 +74,13 @@ then
       echo " deep-copy from ${TBBROOT}/lib"
       ${MKDIR} -p ${HERE}/lib/${TBBPLTFRM}
       for DIR in ${TBBLIBDIR}; do
-        if [ -e ${TBBROOT}/lib/${DIR}/libtbb.so ]; then
-          ${CP} -L ${TBBROOT}/lib/${DIR}/libtbb* ${HERE}/lib/${TBBPLTFRM}
+        if [ -e ${TBBROOT}/${DIR}/libtbb.so ]; then
+          ${CP} -L ${TBBROOT}/${DIR}/libtbb* ${HERE}/lib/${TBBPLTFRM}
           break
         else
-          TBBRTDIR=$(${LS} -1 ${TBBROOT}/lib/${DIR} 2>/dev/null | ${SORT} -V | ${TAIL} -n1)
-          if [ -e ${TBBROOT}/lib/${DIR}/${TBBRTDIR}/libtbb.so ]; then
-            ${CP} -L ${TBBROOT}/lib/${DIR}/${TBBRTDIR}/libtbb* ${HERE}/lib/${TBBPLTFRM}
+          TBBRTDIR=$(${LS} -1 ${TBBROOT}/${DIR} 2>/dev/null | ${SORT} -V | ${TAIL} -n1)
+          if [ -e ${TBBROOT}/${DIR}/${TBBRTDIR}/libtbb.so ]; then
+            ${CP} -L ${TBBROOT}/${DIR}/${TBBRTDIR}/libtbb* ${HERE}/lib/${TBBPLTFRM}
             break
           fi
         fi
