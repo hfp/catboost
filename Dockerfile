@@ -10,6 +10,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN git clone --single-branch --branch develop https://github.com/hfp/catboost
 
-RUN cd catboost/contrib/libs/tbb/&& echo "y" | ./install_tbb.sh
+RUN cd catboost/contrib/libs/tbb && echo "y" | ./install_tbb.sh
 RUN cd catboost && ./make.sh
 RUN mv /catboost/catboost/python-package/catboost-*.whl /wheel
