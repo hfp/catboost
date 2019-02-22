@@ -11,18 +11,18 @@ VERSION_GXX0=$(($(echo "10000*__GNUC__+ 100*__GNUC_MINOR__" | g++   -E -P - 2>/d
 VERSION_GCC8=$(($(echo "10000*__GNUC__+ 100*__GNUC_MINOR__" | gcc-8 -E -P - 2>/dev/null)))
 VERSION_GXX8=$(($(echo "10000*__GNUC__+ 100*__GNUC_MINOR__" | g++-8 -E -P - 2>/dev/null)))
 
-if [ "0" != "$((80000 < VERSION_GCC8))" ]; then
+if   [ "0" != "$((80000 <= VERSION_GCC8))" ]; then
   YCC=gcc-8
-elif [ "0" != "$((80000 < VERSION_GCC0))" ]; then
+elif [ "0" != "$((80000 <= VERSION_GCC0))" ]; then
   YCC=gcc
-elif [ "0" != "$((70000 < VERSION_LLVC))" ]; then
+elif [ "0" != "$((70000 <= VERSION_LLVC))" ]; then
   YCC=clang
 fi
-if [ "0" != "$((80000 < VERSION_GXX8))" ]; then
+if   [ "0" != "$((80000 <= VERSION_GXX8))" ]; then
   YCXX=g++-8
-elif [ "0" != "$((80000 < VERSION_GXX0))" ]; then
+elif [ "0" != "$((80000 <= VERSION_GXX0))" ]; then
   YCXX=g++
-elif [ "0" != "$((70000 < VERSION_LLVX))" ]; then
+elif [ "0" != "$((70000 <= VERSION_LLVX))" ]; then
   YCC=clang++
 fi
 
