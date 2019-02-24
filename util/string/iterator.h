@@ -6,7 +6,6 @@
 #include <util/generic/algorithm.h>
 #include <util/generic/iterator.h>
 #include <util/generic/typetraits.h>
-#include <util/generic/store_policy.h>
 
 #include <utility>
 #include <stlfwd>
@@ -18,6 +17,16 @@
 namespace NPrivate {
     Y_HAS_MEMBER(push_back, PushBack);
     Y_HAS_MEMBER(insert, Insert);
+
+    template<class Src, class Dst>
+    inline void DoFromString(const Src& src, Dst* dst) {
+        *dst = ::FromString<Dst>(src);
+    }
+
+    template<class T>
+    inline void DoFromString(const T& src, T* dst) {
+        *dst = src;
+    }
 
     template <class Container>
     struct TContainerConsumer {
@@ -35,13 +44,13 @@ namespace NPrivate {
 
     private:
         template<class OtherContainer, class StringBuf>
-        auto operator()(OtherContainer* c, StringBuf e) const -> decltype(c->push_back(value_type(e))) {
-            return c->push_back(value_type(e));
+        auto operator()(OtherContainer* c, StringBuf e) const -> decltype(c->emplace_back()) {
+            return c->emplace_back(value_type(e));
         }
 
         template<class OtherContainer, class StringBuf>
-        auto operator()(OtherContainer* c, StringBuf e) const -> decltype(c->insert(value_type(e))) {
-            return c->insert(value_type(e));
+        auto operator()(OtherContainer* c, StringBuf e) const -> decltype(c->emplace()) {
+            return c->emplace(value_type(e));
         }
 
         Container* C_;
@@ -63,13 +72,17 @@ namespace NPrivate {
 
     private:
         template<class OtherContainer, class StringBuf>
-        auto operator()(OtherContainer* c, StringBuf e) const -> decltype(c->push_back(FromString<value_type>(e))) {
-            return c->push_back(FromString<value_type>(e));
+        auto operator()(OtherContainer* c, StringBuf e) const -> decltype(c->emplace_back()) {
+            value_type v;
+            ::NPrivate::DoFromString(e, &v);
+            return c->emplace_back(std::move(v));
         }
 
         template<class OtherContainer, class StringBuf>
-        auto operator()(OtherContainer* c, StringBuf e) const -> decltype(c->insert(FromString<value_type>(e))) {
-            return c->insert(FromString<value_type>(e));
+        auto operator()(OtherContainer* c, StringBuf e) const -> decltype(c->emplace()) {
+            value_type v;
+            ::NPrivate::DoFromString(e, &v);
+            return c->emplace(std::move(v));
         }
 
         Container* C_;
@@ -149,6 +162,7 @@ struct TStlIteratorFace: public It, public TInputRangeAdaptor<TStlIteratorFace<I
     }
 
     // TODO: this is actually TryParseInto
+    // TODO: despite starting with 'Try', this method throws! Need to use TryFromString inside.
     /**
      * Same as `CollectInto`, just doesn't throw.
      *
@@ -163,7 +177,7 @@ struct TStlIteratorFace: public It, public TInputRangeAdaptor<TStlIteratorFace<I
         ApplyToMany([&](auto&& arg) {
             if (it != this->end()) {
                 ++filled;
-                *arg = ::FromString<std::remove_reference_t<decltype(*arg)>>(it->Token());
+                ::NPrivate::DoFromString(it->Token(), arg);
                 ++it;
             }
         }, args...);

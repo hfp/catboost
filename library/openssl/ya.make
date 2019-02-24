@@ -1,6 +1,8 @@
 RECURSE(
     compat
-    io_method
-    io_method/ut
+    holders
+    holders/ut
+    method
+    method/ut
     init
 )
