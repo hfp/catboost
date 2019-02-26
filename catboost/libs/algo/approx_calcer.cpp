@@ -523,7 +523,7 @@ static void CalcApproxDeltaSimple(
     };
 
     const int dimensionCount = ctx->LearnProgress.ApproxDimension;
-    const bool isTrivialWalker = gradientIterations == 1 || ctx->Params.ObliviousTreeOptions->LeavesEstimationBacktrackingType == ELeavesEstimationStepBacktracking::None;
+    const bool isTrivialWalker = gradientIterations == 1 || ctx->Params.ObliviousTreeOptions->LeavesEstimationBacktrackingType == ELeavesEstimationStepBacktracking::No;
     TVector<THolder<IMetric>> lossFunction;
     double directionSign = 0;
     if (!isTrivialWalker) {
@@ -600,7 +600,7 @@ static void CalcLeafValuesSimple(
     };
 
     const int dimensionCount = ctx->LearnProgress.ApproxDimension;
-    const bool isTrivialWalker = gradientIterations == 1 || ctx->Params.ObliviousTreeOptions->LeavesEstimationBacktrackingType == ELeavesEstimationStepBacktracking::None;
+    const bool isTrivialWalker = gradientIterations == 1 || ctx->Params.ObliviousTreeOptions->LeavesEstimationBacktrackingType == ELeavesEstimationStepBacktracking::No;
     TVector<THolder<IMetric>> lossFunction;
     double directionSign = 0;
     if (!isTrivialWalker) {

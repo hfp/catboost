@@ -585,6 +585,11 @@ class Pool(_PoolBase):
         """
         if isinstance(data, DataFrame):
             feature_names = list(data.columns)
+            if cat_features is not None:
+                cat_features = [
+                    data.columns.get_loc(cf) if isinstance(cf, STRING_TYPES) else cf
+                    for cf in cat_features
+                ]
         if isinstance(data, Series):
             data = data.values.tolist()
         if isinstance(data, FeaturesData):
@@ -1904,7 +1909,7 @@ class CatBoostClassifier(CatBoost):
         The number of steps in the gradient when calculating the values in the leaves.
         If None, then leaf_estimation_iterations=1.
         range: [1,+inf]
-    leaf_estimation_method : string, [default='Gradient']
+    leaf_estimation_method : string, [default=None]
         The method used to calculate the values in the leaves.
         Possible values:
             - 'Newton'
@@ -2102,6 +2107,13 @@ class CatBoostClassifier(CatBoost):
         Synonym for od_wait. Only one of these parameters should be set.
 
     cat_features : list of numpy.array of integer feature indices.
+
+    leaf_estimation_backtracking : string, [default=None]
+        Type of backtracking during gradient descent.
+        Possible values:
+            - 'No' - never backtrack; supported on CPU and GPU
+            - 'AnyImprovement' - reduce the descent step until the value of loss function is less than before the step; supported on CPU and GPU
+            - 'Armijo' - reduce the descent step until Armijo condition is satisfied; supported on GPU only
     """
     def __init__(
         self,
@@ -2189,7 +2201,8 @@ class CatBoostClassifier(CatBoost):
         cat_features=None,
         growing_policy=None,
         min_samples_in_leaf=None,
-        max_leaves_count=None
+        max_leaves_count=None,
+        leaf_estimation_backtracking=None
     ):
         params = {}
         not_params = ["not_params", "self", "params", "__class__"]
