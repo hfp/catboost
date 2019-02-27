@@ -924,23 +924,29 @@ def test_multi_leaf_estimation_method(leaf_estimation_method, boosting_type, dev
 LOSS_FUNCTIONS_SHORT = ['Logloss', 'MultiClass']
 
 
-@pytest.mark.parametrize('loss_function', LOSS_FUNCTIONS_SHORT)
-@pytest.mark.parametrize('boosting_type', BOOSTING_TYPE)
-def test_doc_id(loss_function, boosting_type):
-    """This is a test on proper parsing of column descriptors. In the future
-    DocId will be deprecated and replaced with SampleId. So, the test checks
-    that DocId is parsed correctly.
-    """
+@pytest.mark.parametrize(
+    'loss_function',
+     LOSS_FUNCTIONS_SHORT,
+    ids = ['loss_function=%s' % loss_function for loss_function in LOSS_FUNCTIONS_SHORT]
+)
+@pytest.mark.parametrize(
+    'column_name',
+    ['doc_id', 'sample_id'],
+    ids=['column_name=doc_id', 'column_name=sample_id']
+)
+def test_sample_id(loss_function, column_name):
     output_model_path = yatest.common.test_output_path('model.bin')
     output_eval_path = yatest.common.test_output_path('test.eval')
+
+    column_description = data_file('adult_' + column_name, 'train.cd')
     cmd = (
         CATBOOST_PATH,
         'fit',
         '--loss-function', loss_function,
-        '-f', data_file('adult_sample_id', 'train'),
-        '-t', data_file('adult_sample_id', 'test'),
-        '--column-description', data_file('adult_sample_id', 'train-obsolete.cd'),
-        '--boosting-type', boosting_type,
+        '-f', data_file('adult_doc_id', 'train'),
+        '-t', data_file('adult_doc_id', 'test'),
+        '--column-description', column_description,
+        '--boosting-type', 'Plain',
         '-i', '10',
         '-w', '0.03',
         '-T', '4',
@@ -954,46 +960,8 @@ def test_doc_id(loss_function, boosting_type):
     cmd = (
         CATBOOST_PATH,
         'calc',
-        '--input-path', data_file('adult_sample_id', 'test'),
-        '--column-description', data_file('adult_sample_id', 'train.cd'),
-        '-m', output_model_path,
-        '--output-path', formula_predict_path,
-        '--prediction-type', 'RawFormulaVal'
-    )
-    yatest.common.execute(cmd)
-
-    assert(compare_evals(output_eval_path, formula_predict_path))
-    return [local_canonical_file(output_eval_path)]
-
-
-@pytest.mark.parametrize('loss_function', LOSS_FUNCTIONS_SHORT)
-@pytest.mark.parametrize('boosting_type', BOOSTING_TYPE)
-def test_sample_id(loss_function, boosting_type):
-    output_model_path = yatest.common.test_output_path('model.bin')
-    output_eval_path = yatest.common.test_output_path('test.eval')
-    cmd = (
-        CATBOOST_PATH,
-        'fit',
-        '--loss-function', loss_function,
-        '-f', data_file('adult_sample_id', 'train'),
-        '-t', data_file('adult_sample_id', 'test'),
-        '--column-description', data_file('adult_sample_id', 'train.cd'),
-        '--boosting-type', boosting_type,
-        '-i', '10',
-        '-w', '0.03',
-        '-T', '4',
-        '-m', output_model_path,
-        '--eval-file', output_eval_path,
-        '--use-best-model', 'false',
-    )
-    yatest.common.execute(cmd)
-    formula_predict_path = yatest.common.test_output_path('predict_test.eval')
-
-    cmd = (
-        CATBOOST_PATH,
-        'calc',
-        '--input-path', data_file('adult_sample_id', 'test'),
-        '--column-description', data_file('adult_sample_id', 'train.cd'),
+        '--input-path', data_file('adult_doc_id', 'test'),
+        '--column-description', column_description,
         '-m', output_model_path,
         '--output-path', formula_predict_path,
         '--prediction-type', 'RawFormulaVal'
@@ -1925,6 +1893,58 @@ def test_loss_change_fstr(boosting_type):
     assert(np.allclose(fit_otuput, fstr_output, rtol=1e-6))
 
     return [local_canonical_file(output_fstr_path)]
+
+
+@pytest.mark.parametrize('boosting_type', BOOSTING_TYPE)
+@pytest.mark.parametrize('ranking_parameters', [
+    {'loss-function': 'PairLogit', 'fstr-type': 'LossFunctionChange'},
+    {'loss-function': 'Logloss', 'fstr-type': 'PredictionValuesChange'}
+])
+def test_fstr_feature_importance_default_value(boosting_type, ranking_parameters):
+    model_path = yatest.common.test_output_path('model.bin')
+    fstr_path_0 = yatest.common.test_output_path('fstr_0.tsv')
+    fstr_path_1 = yatest.common.test_output_path('fstr_1.tsv')
+
+    cmd = (
+        CATBOOST_PATH,
+        'fit',
+        '--use-best-model', 'false',
+        '--learn-set', data_file('querywise', 'train'),
+        '--column-description', data_file('querywise', 'train.cd'),
+        '--learn-pairs', data_file('querywise', 'train.pairs'),
+        '-i', '10',
+        '-T', '4',
+        '--one-hot-max-size', '10',
+        '--model-file', model_path,
+        '--loss-function', ranking_parameters['loss-function']
+    )
+    yatest.common.execute(
+        cmd + ('--fstr-file', fstr_path_0,
+               '--fstr-type', 'FeatureImportance')
+        )
+    yatest.common.execute(
+        cmd + ('--fstr-file', fstr_path_1,
+               '--fstr-type', ranking_parameters['fstr-type'])
+    )
+
+    fstr_otuput_0 = np.loadtxt(fstr_path_0, dtype='float', delimiter='\t')
+    fstr_output_1 = np.loadtxt(fstr_path_1, dtype='float', delimiter='\t')
+    assert(np.allclose(fstr_otuput_0, fstr_output_1, rtol=1e-6))
+
+    fstr_cmd = (
+        CATBOOST_PATH,
+        'fstr',
+        '--input-path', data_file('querywise', 'train'),
+        '--column-description', data_file('querywise', 'train.cd'),
+        '--input-pairs', data_file('querywise', 'train.pairs'),
+        '--model-file', model_path,
+        '--output-path', fstr_path_1,
+        '--fstr-type', 'FeatureImportance',
+    )
+    yatest.common.execute(fstr_cmd)
+
+    fstr_output_1 = np.loadtxt(fstr_path_1, dtype='float', delimiter='\t')
+    assert(np.allclose(fstr_otuput_0, fstr_output_1, rtol=1e-6))
 
 
 @pytest.mark.parametrize('boosting_type', BOOSTING_TYPE)
