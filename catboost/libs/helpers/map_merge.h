@@ -10,7 +10,7 @@
 #include <util/generic/utility.h>
 #include <util/generic/ymath.h>
 
-#if !defined(MAP_MERGE_FASTREDUCE)
+#if !defined(MAP_MERGE_FASTREDUCE) && 0
 # define MAP_MERGE_FASTREDUCE
 #endif
 
