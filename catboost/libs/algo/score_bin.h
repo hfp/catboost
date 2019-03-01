@@ -3,7 +3,7 @@
 #include <util/generic/vector.h>
 #include <util/generic/xrange.h>
 
-#if !defined(SCORE_BIN_TLS)
+#if !defined(SCORE_BIN_TLS) && defined(__TLS_OPTS)
 # include <util/system/tls.h>
 # define SCORE_BIN_TLS
 #endif

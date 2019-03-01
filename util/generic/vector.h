@@ -8,7 +8,7 @@
 #include <vector>
 #include <initializer_list>
 
-#if !defined(VECTOR_TLS)
+#if !defined(VECTOR_TLS) && defined(__TLS_OPTS)
 # include <util/system/tls.h>
 # define VECTOR_TLS
 #endif

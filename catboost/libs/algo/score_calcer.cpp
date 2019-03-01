@@ -12,7 +12,7 @@
 
 #include <type_traits>
 
-#if !defined(SCORE_CALCER_TLS)
+#if !defined(SCORE_CALCER_TLS) && defined(__TLS_OPTS)
 # include <util/system/tls.h>
 # define SCORE_CALCER_TLS
 #endif

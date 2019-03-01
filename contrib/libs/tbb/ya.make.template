@@ -16,6 +16,7 @@ ADDINCL(
 IF (TBB)
     CFLAGS(
         GLOBAL -D__TBB
+        GLOBAL -D__TLS_OPTS
     )
     LDFLAGS(
         -Lcontrib/libs/tbb/lib/intel64

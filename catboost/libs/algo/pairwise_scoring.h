@@ -10,7 +10,7 @@
 
 #include <library/binsaver/bin_saver.h>
 
-#if !defined(PAIRWISE_SCORING_TLS)
+#if !defined(PAIRWISE_SCORING_TLS) && defined(__TLS_OPTS)
 # include <util/system/tls.h>
 # define PAIRWISE_SCORING_TLS
 #endif

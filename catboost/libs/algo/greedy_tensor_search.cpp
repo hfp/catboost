@@ -20,7 +20,7 @@
 #include <util/string/builder.h>
 #include <util/system/mem_info.h>
 
-#if !defined(GREEDY_TENSOR_SEARCH_TLS)
+#if !defined(GREEDY_TENSOR_SEARCH_TLS) && defined(__TLS_OPTS)
 # include <util/system/tls.h>
 # define GREEDY_TENSOR_SEARCH_TLS
 #endif
