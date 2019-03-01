@@ -10,10 +10,6 @@
 #include <util/generic/utility.h>
 #include <util/generic/ymath.h>
 
-#if !defined(MAP_MERGE_FASTREDUCE) && 0
-# define MAP_MERGE_FASTREDUCE
-#endif
-
 namespace NCB {
 
     /**
@@ -25,7 +21,8 @@ namespace NCB {
      * mapFunc(blockIndexRange, blockOutput) processes data in range
      *   blockIndexRange and saves data to blockOutput
      *   should be able to handle empty index range (return valid blockOutput in this case)
-     * mergeFunc(dst, addVector) adds addVector data to dst
+     * mergeFunc(dst, addVector) adds addVector data to dst, it can modify addVector as it is no
+     *   longer used after this call
      */
     template <class TOutput, class TMapFunc, class TMergeFunc>
     void MapMerge(
@@ -42,12 +39,8 @@ namespace NCB {
         } else if (blockCount == 1) {
             mapFunc(indexRangesGenerator.GetRange(0), output);
         } else {
-#if defined(MAP_MERGE_FASTREDUCE)
-            static TVector<TOutput> mapOutputs; // w/o first, first is reused from 'output' param
-            mapOutputs.yresize(blockCount - 1);
-#else
             TVector<TOutput> mapOutputs(blockCount - 1); // w/o first, first is reused from 'output' param
-#endif
+
             localExecutor->ExecRange(
                 [&](int blockId) {
                     mapFunc(
@@ -60,7 +53,7 @@ namespace NCB {
                 NPar::TLocalExecutor::WAIT_COMPLETE
             );
 
-            mergeFunc(output, mapOutputs);
+            mergeFunc(output, std::move(mapOutputs));
         }
     }
 
