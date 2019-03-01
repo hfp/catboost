@@ -30,6 +30,8 @@ if [ "--default" != "$1" ]; then
   export CC=${YCC}
   unset CXX
 else
+  unset CXX
+  unset CC
   shift
 fi
 YARGS+=" -DHAVE_CUDA=no -r $@"
