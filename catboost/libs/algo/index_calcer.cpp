@@ -403,7 +403,7 @@ TVector<TIndexType> BuildIndices(
             onlineCtrs,
             (int)docOffset,
             localExecutor,
-            &indices[docOffset]);
+            &indices[0] + docOffset);
         docOffset += testSet.GetObjectCount();
     }
     return indices;
