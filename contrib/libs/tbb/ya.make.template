@@ -9,11 +9,10 @@ NO_JOIN_SRC()
 NO_RUNTIME()
 NO_UTIL()
 
-ADDINCL(
-    GLOBAL contrib/libs/tbb/include
-)
-
 IF (TBB)
+    ADDINCL(
+        GLOBAL contrib/libs/tbb/include
+    )
     CFLAGS(
         GLOBAL -D__TBB
         GLOBAL -D__TLS_OPTS
@@ -23,6 +22,10 @@ IF (TBB)
     )
     EXTRALIBS(
         -ltbb
+    )
+ELSE()
+    ADDINCL(
+        GLOBAL contrib/libs
     )
 ENDIF()
 
