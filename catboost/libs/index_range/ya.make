@@ -6,8 +6,8 @@ SRCS(
     index_range.cpp
 )
 
-PEERDIR(
-    contrib/libs/tbb
-)
+IF (TBB)
+    PEERDIR(contrib/libs/tbb)
+ENDIF()
 
 END()

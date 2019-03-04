@@ -12,8 +12,11 @@ PEERDIR(
     util/charset
     contrib/libs/zlib
     contrib/libs/double-conversion
-    contrib/libs/tbb
 )
+
+IF (TBB)
+    PEERDIR(contrib/libs/tbb)
+ENDIF()
 
 # datetime
 JOIN_SRCS(

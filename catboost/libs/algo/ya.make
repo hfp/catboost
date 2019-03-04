@@ -68,7 +68,10 @@ PEERDIR(
     library/par
     library/svnversion
     library/threading/local_executor
-    contrib/libs/tbb
 )
+
+IF (TBB)
+    PEERDIR(contrib/libs/tbb)
+ENDIF()
 
 END()
