@@ -481,7 +481,7 @@ static void CalcStatsImpl(
                 }
             }
         },
-        /*mergeFunc*/[&](TPairwiseStats* output, const TVector<TPairwiseStats>& addVector) {
+        /*mergeFunc*/[&](TPairwiseStats* output, const TVector<TPairwiseStats>&& addVector) {
             for (const auto& addItem : addVector) {
                 output->Add(addItem);
             }
@@ -575,7 +575,7 @@ static void CalcStatsImpl(
         },
         /*mergeFunc*/[&](
             TBucketStatsRefOptionalHolder* output,
-            const TVector<TBucketStatsRefOptionalHolder>& addVector
+            const TVector<TBucketStatsRefOptionalHolder>&& addVector
         ) {
             forEachBodyTailAndApproxDimension(
                 [&](int /*bodyTailIdx*/, int /*dim*/, int bucketStatsArrayBegin) {

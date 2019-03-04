@@ -85,7 +85,7 @@ void AddLeafDersForQueries(
             blockWeightsData[indicesData[docId]] += weightsData == nullptr ? 1.0f : weightsData[docId];
         }
     };
-    const auto mergeBuckets = [&](TBucketStats* mergedStats, const TVector<TBucketStats>& blocksStats) {
+    const auto mergeBuckets = [&](TBucketStats* mergedStats, const TVector<TBucketStats>&& blocksStats) {
         for (const auto& blockStats : blocksStats) {
             for (int idx = 0; idx < leafCount; ++idx) {
                 mergedStats->first[idx].Der1 += blockStats.first[idx].Der1;
