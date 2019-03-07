@@ -400,6 +400,22 @@ public:
     TCounter GetCounter() const {
         return *(const TCounter*)&impl_;
     }
+    bool Dequeue(T* data) {
+        Y_ASSERT(NULL != data);
+        if (impl_.queue_.try_pop(*data)) {
+            impl_.DecCount(*data);
+            return true;
+        }
+        return false;
+    }
+    template <typename TCollection>
+    void DequeueAll(TCollection* res) {
+        T data;
+        Y_ASSERT(NULL != res);
+        while (impl_.queue_.try_pop(data)) {
+            res->emplace_back(std::move(data));
+        }
+    }
 #endif
 };
 
