@@ -209,7 +209,7 @@ class TLockFreeQueue: public TNonCopyable {
     static void FillCollection(TListNode* lst, TCollection* res) {
         while (lst) {
             res->emplace_back(std::move(lst->Data));
-            lst = lst->Next;
+            lst = AtomicGet(lst->Next);
         }
     }
 
@@ -226,7 +226,7 @@ class TLockFreeQueue: public TNonCopyable {
         do {
             TListNode* newElem = new TListNode(std::move(lst->Data), newCopy);
             newCopy = newElem;
-            lst = lst->Next;
+            lst = AtomicGet(lst->Next);
         } while (lst);
 
         FillCollection(newCopy, res);
