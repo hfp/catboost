@@ -2034,6 +2034,11 @@ when ($MSVC_INLINE_OPTIMIZED == "no") {
         flags_no_shadow = ['/wd4456', '/wd4457']
         flags_no_compiler_warnings = ['/w']
 
+        if self.tc.use_clang:
+            emit('CLANG_CL', 'yes')
+        if self.tc.ide_msvs:
+            emit('IDE_MSVS', 'yes')
+
         emit('CXX_COMPILER', self.tc.cxx_compiler)
         emit('C_COMPILER', self.tc.c_compiler)
         emit('MASM_COMPILER', self.tc.masm_compiler)

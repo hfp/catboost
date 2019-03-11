@@ -324,7 +324,7 @@ TString NCatboostOptions::TOutputFilesOptions::GetFullPath(const TString& fileNa
 
     TFsPath filePath(fileName);
     const TString& trainDirStr = TrainDir.Get();
-    if (trainDirStr.Empty() || filePath.IsAbsolute()) {
+    if (trainDirStr.empty() || filePath.IsAbsolute()) {
         return fileName;
     } else {
         return JoinFsPaths(trainDirStr, filePath);
