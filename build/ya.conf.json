@@ -1385,7 +1385,7 @@
         },
         "arc": {
             "formula": {
-                "sandbox_id": [390773061],
+                "sandbox_id": [392846713],
                 "match": "arc"
             },
             "executable": {
@@ -1589,7 +1589,7 @@
         },
         "jstyle_runner": {
             "formula": {
-                "sandbox_id": [270212924],
+                "sandbox_id": [390839884],
                 "match": "JSTYLERUNNER"
             }
         },
@@ -2087,7 +2087,7 @@
         },
         "horadric":{
             "formula": {
-                "sandbox_id": 347723612,
+                "sandbox_id": 392844084,
                 "match": "horadric"
             },
             "executable": {
