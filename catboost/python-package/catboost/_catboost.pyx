@@ -290,7 +290,6 @@ cdef extern from "catboost/libs/data_new/target.h" namespace "NCB":
         pass
 
 ctypedef TIntrusivePtr[TTargetDataProvider] TTargetDataProviderPtr
-ctypedef THashMap[TTargetDataSpecification, TTargetDataProviderPtr] TTargetDataProviders
 
 
 cdef extern from "catboost/libs/data_new/data_provider.h" namespace "NCB":
@@ -329,7 +328,7 @@ cdef extern from "catboost/libs/data_new/data_provider.h" namespace "NCB":
         TDataMetaInfo MetaInfo
         TObjectsGroupingPtr ObjectsGrouping
         TIntrusivePtr[TTObjectsDataProvider] ObjectsData
-        TTargetDataProviders TargetData
+        TTargetDataProviderPtr TargetData
 
 
     ctypedef TProcessedDataProviderTemplate[TObjectsDataProvider] TProcessedDataProvider
@@ -813,12 +812,10 @@ cdef inline float _FloatOrNanFromString(const TString& s) except *:
     cdef char* stop = NULL
     cdef double parsed = StrToD(s.data(), &stop)
     cdef float res
-    if s.empty():
+    if IsMissingValue(<TStringBuf>s):
         res = _FLOAT_NAN
     elif stop == s.data() + s.size():
         res = parsed
-    elif IsMissingValue(<TStringBuf>s):
-        res = _FLOAT_NAN
     else:
         raise TypeError("Cannot convert '{}' to float".format(str(s)))
     return res

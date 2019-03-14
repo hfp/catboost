@@ -1061,6 +1061,7 @@ class MSVCToolchainOptions(ToolchainOptions):
         self.system_msvc = 'system_msvc' in self.params
         self.ide_msvs = 'ide_msvs' in self.params
         self.use_clang = self.params.get('use_clang', False)
+        self.use_arcadia_toolchain = self.params.get('use_arcadia_toolchain', False)
 
         self.sdk_version = None
 
@@ -1748,6 +1749,9 @@ class LD(Linker):
         emit('START_WHOLE_ARCHIVE_VALUE', self.whole_archive)
         emit('END_WHOLE_ARCHIVE_VALUE', self.no_whole_archive)
 
+        if self.ld_sdk:
+            emit('LD_SDK_VERSION', self.ld_sdk)
+
         dwarf_tool = self.tc.dwarf_tool
         if dwarf_tool is None and self.tc.is_clang and (self.target.is_macos or self.target.is_ios):
             dsymutil = '{}/bin/{}dsymutil'.format(self.tc.name_marker, '' if self.tc.version_at_least(7) else 'llvm-')
@@ -2038,6 +2042,8 @@ when ($MSVC_INLINE_OPTIMIZED == "no") {
             emit('CLANG_CL', 'yes')
         if self.tc.ide_msvs:
             emit('IDE_MSVS', 'yes')
+        if self.tc.use_arcadia_toolchain:
+            emit('USE_ARCADIA_TOOLCHAIN', 'yes')
 
         emit('CXX_COMPILER', self.tc.cxx_compiler)
         emit('C_COMPILER', self.tc.c_compiler)

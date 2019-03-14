@@ -1,5 +1,8 @@
 ALLOW vendor/ -> .*
 
+# in-process redis server for tests
+ALLOW .* -> vendor/github.com/alicebob/miniredis
+
 # AWS client libraries
 ALLOW .* -> vendor/github.com/aws/aws-sdk-go          
 
@@ -8,6 +11,9 @@ ALLOW .* -> vendor/github.com/c2h5oh/datasize
 
 # etcd client
 ALLOW .* -> vendor/github.com/coreos/etcd
+
+# mocking for database/sql
+ALLOW .* -> vendor/github.com/DATA-DOG/go-sqlmock    
 
 # pretty printer for GO
 ALLOW .* -> vendor/github.com/davecgh/go-spew/spew    
@@ -20,6 +26,12 @@ ALLOW .* -> vendor/github.com/fsnotify/fsnotify
 
 # lightweight, idiomatic and composable router
 ALLOW .* -> vendor/github.com/go-chi/chi              
+
+# a pure Go MySQL driver
+ALLOW .* -> vendor/github.com/go-sql-driver/mysql
+
+# thread-safe file locking library
+ALLOW .* -> vendor/github.com/gofrs/flock
 
 # a pure Go implementation of Universally Unique Identifiers
 ALLOW .* -> vendor/github.com/gofrs/uuid              
@@ -35,6 +47,9 @@ ALLOW .* -> vendor/github.com/golang/snappy
 
 # API for sentry
 ALLOW .* -> vendor/github.com/getsentry/raven-go      
+
+# configuration library
+ALLOW .* -> vendor/github.com/heetch/confita
 
 # PostgreSQL driver and toolkit for Go
 ALLOW .* -> vendor/github.com/jackc/pgx               
@@ -158,6 +173,15 @@ ALLOW .* -> vendor/github.com/jasonlvhit/gocron
 
 # The MongoDB supported driver for Go
 ALLOW .* -> vendor/go.mongodb.org/mongo-driver
+
+# Package for comparing Go values in tests
+ALLOW .* -> vendor/github.com/google/go-cmp
+
+# CORS is a net/http handler implementing Cross Origin Resource Sharing W3 specification
+ALLOW .* -> vendor/github.com/rs/cors
+
+# generation tool and serialization library for MessagePack
+ALLOW .* -> vendor/github.com/tinylib/msgp
 
 # 
 # Temporary exceptions.
